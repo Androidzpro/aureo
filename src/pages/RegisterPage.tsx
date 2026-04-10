@@ -7,99 +7,65 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 
-const registerSchema = z.object({
+const schema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
   confirmPassword: z.string(),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmPassword'],
-})
-
-type FormData = z.infer<typeof registerSchema>
+}).refine(d => d.password === d.confirmPassword, { message: 'No coinciden', path: ['confirmPassword'] })
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { register: registerUser } = useAuth()
+  const { register: reg } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(registerSchema),
-  })
-
-  const onSubmit = async (data: FormData) => {
-    try {
-      setIsLoading(true)
-      setError('')
-      await registerUser(data.name, data.email, data.password)
-      navigate('/')
-    } catch (err: any) {
-      setError(err?.message || 'Error al crear la cuenta')
-    } finally {
-      setIsLoading(false)
-    }
+  const onSubmit = async (data: { name: string; email: string; password: string }) => {
+    try { setIsLoading(true); setError(''); await reg(data.name, data.email, data.password); navigate('/') }
+    catch (e: any) { setError(e?.message || 'Error al crear la cuenta') }
+    finally { setIsLoading(false) }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-4"
-    >
-      <Card className="w-full max-w-md shadow-xl border-gray-200/50">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-              <span className="text-white font-bold text-2xl">F</span>
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Crear cuenta</CardTitle>
-          <CardDescription>Empieza a controlar tus finanzas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre</Label>
-              <Input id="name" type="text" placeholder="Tu nombre" {...register('name')} />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input id="email" type="email" placeholder="tu@email.com" {...register('email')} />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" {...register('password')} />
-              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-              <Input id="confirmPassword" type="password" {...register('confirmPassword')} />
-              {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
-            </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700" disabled={isLoading}>
-              {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.1 }}
+            className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-200 mx-auto mb-4">
+            <span className="text-white font-black text-2xl">F</span>
+          </motion.div>
+          <h1 className="text-2xl font-extrabold text-gradient">FlowFin</h1>
+          <p className="text-gray-400 text-sm mt-1">Empieza a controlar tus finanzas</p>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/50 p-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+            <div><Label className="text-sm font-medium text-gray-700">Nombre</Label>
+              <Input placeholder="Tu nombre" className="mt-1.5" {...register('name')} />
+              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}</div>
+            <div><Label className="text-sm font-medium text-gray-700">Correo</Label>
+              <Input type="email" placeholder="tu@email.com" className="mt-1.5" {...register('email')} />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}</div>
+            <div><Label className="text-sm font-medium text-gray-700">Contraseña</Label>
+              <Input type="password" placeholder="••••••••" className="mt-1.5" {...register('password')} />
+              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}</div>
+            <div><Label className="text-sm font-medium text-gray-700">Confirmar</Label>
+              <Input type="password" placeholder="••••••••" className="mt-1.5" {...register('confirmPassword')} />
+              {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}</div>
+            <Button type="submit" className="w-full gradient-primary text-white font-semibold h-12 rounded-xl shadow-lg shadow-indigo-200" disabled={isLoading}>
+              {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Crear cuenta'}
             </Button>
           </form>
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 text-center">
-              {error}
-            </div>
-          )}
-          <div className="mt-6 text-center text-sm">
-            <span className="text-gray-500">¿Ya tienes cuenta? </span>
-            <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
-              Iniciar sesión
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          {error && <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 text-center">{error}</div>}
+        </div>
+
+        <p className="text-center text-sm text-gray-400 mt-6">
+          ¿Ya tienes cuenta? <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">Iniciar sesión</Link>
+        </p>
+      </motion.div>
+    </div>
   )
 }

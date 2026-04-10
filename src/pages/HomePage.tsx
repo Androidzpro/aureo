@@ -1,423 +1,310 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { 
-  TrendingUp, TrendingDown, Wallet, Plus, ArrowUpRight, ArrowDownRight,
-  Target, CreditCard, PiggyBank, Calendar, Search, Filter, Download,
-  ChevronDown, MoreHorizontal, Edit2, Trash2, X, Check, AlertTriangle,
-  ArrowRightLeft, BarChart3, Eye, EyeOff
-} from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { Plus, ArrowUpRight, ArrowDownRight, X, Calendar, Lightbulb, ChevronRight, Menu, Filter } from 'lucide-react'
+import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
-import { formatCurrency, formatDate, formatShortDate, cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { formatCurrency, formatDate, analyzeFinances, FINANCIAL_TIPS, sounds, getCategory, cn } from '@/lib/data'
 
 export default function HomePage() {
   const { user } = useAuthStore()
-  const [stats, setStats] = useState({ balance: 0, income: 0, expenses: 0, savings: 0, debts: 0, netWorth: 0 })
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [accounts, setAccounts] = useState<any[]>([])
-  const [budgets, setBudgets] = useState<any[]>([])
-  const [goals, setGoals] = useState<any[]>([])
+  const [txs, setTxs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [showFilters, setShowFilters] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState('all')
   const [showTxModal, setShowTxModal] = useState(false)
-  const [txForm, setTxForm] = useState({ description: '', amount: '', type: 'expense', category_id: '', account_id: '', date: new Date().toISOString().split('T')[0], is_recurring: false, notes: '' })
-  const [categories, setCategories] = useState<any[]>([])
+  const [showTip, setShowTip] = useState(true)
+  const [txForm, setTxForm] = useState({ description: '', amount: '', type: 'expense' as string, category_id: '', date: new Date().toISOString().split('T')[0] })
 
-  useEffect(() => { loadData() }, [user?.id])
+  useEffect(() => { load(); }, [user?.id])
 
-  const loadData = async () => {
+  const load = async () => {
     if (!user?.id) return
-    try {
-      const now = new Date()
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-
-      // Load all data in parallel
-      const [txsRes, accountsRes, budgetsRes, goalsRes, catsRes, debtsRes] = await Promise.all([
-        supabase.from('transactions').select('*, categories(*), accounts(*)').eq('user_id', user.id).gte('date', startOfMonth).order('date', { ascending: false }).limit(50),
-        supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true),
-        supabase.from('budgets').select('*, categories(*)').eq('user_id', user.id).eq('month', now.getMonth() + 1).eq('year', now.getFullYear()),
-        supabase.from('savings_goals').select('*').eq('user_id', user.id).eq('is_active', true),
-        supabase.from('categories').select('*').eq('type', 'expense'),
-        supabase.from('debts').select('*').eq('user_id', user.id).eq('status', 'active'),
-      ])
-
-      const txs = txsRes.data || []
-      const accs = accountsRes.data || []
-      const bgs = budgetsRes.data || []
-      const gls = goalsRes.data || []
-      const cats = catsRes.data || []
-      const dbts = debtsRes.data || []
-
-      setTransactions(txs)
-      setAccounts(accs)
-      setBudgets(bgs)
-      setGoals(gls)
-      setCategories(cats)
-
-      const income = txs.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + t.amount, 0)
-      const expenses = txs.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + t.amount, 0)
-      const totalAccounts = accs.filter((a: any) => a.type !== 'credit').reduce((s: number, a: any) => s + (a.balance || 0), 0)
-      const totalDebts = dbts.reduce((s: number, d: any) => s + (d.total_amount - d.paid_amount), 0)
-      const totalGoals = gls.reduce((s: number, g: any) => s + g.current_amount, 0)
-
-      setStats({
-        balance: totalAccounts,
-        income,
-        expenses,
-        savings: totalGoals,
-        debts: totalDebts,
-        netWorth: totalAccounts - totalDebts,
-      })
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+    const { data } = await supabase.from('transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(100)
+    if (data) setTxs(data)
+    setLoading(false)
   }
 
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(tx => {
-      const matchSearch = tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) || tx.categories?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchType = filterType === 'all' || tx.type === filterType
-      return matchSearch && matchType
-    })
-  }, [transactions, searchQuery, filterType])
+  const analysis = useMemo(() => analyzeFinances(txs), [txs])
 
-  const addTransaction = async () => {
+  const monthTxs = useMemo(() => {
+    const now = new Date()
+    return txs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() })
+  }, [txs])
+
+  const monthIncome = monthTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const monthExpense = monthTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+  const addTx = async () => {
     if (!user?.id || !txForm.amount || !txForm.description) return
-    const amount = parseFloat(txForm.amount)
     await supabase.from('transactions').insert([{
-      user_id: user.id,
-      type: txForm.type,
-      amount,
-      description: txForm.description,
-      category_id: txForm.category_id || null,
-      account_id: txForm.account_id || null,
-      date: new Date(txForm.date).toISOString(),
-      is_recurring: txForm.is_recurring,
-      notes: txForm.notes || null,
+      user_id: user.id, type: txForm.type, amount: parseFloat(txForm.amount),
+      description: txForm.description, category_id: txForm.category_id || '',
+      date: new Date(txForm.date).toISOString(), notes: '',
     }])
-    // Update account balance
-    if (txForm.account_id) {
-      const acc = accounts.find(a => a.id === txForm.account_id)
-      if (acc) {
-        const newBalance = txForm.type === 'income' ? acc.balance + amount : acc.balance - amount
-        await supabase.from('accounts').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('id', txForm.account_id)
-      }
-    }
+    sounds.success()
     setShowTxModal(false)
-    setTxForm({ description: '', amount: '', type: 'expense', category_id: '', account_id: '', date: new Date().toISOString().split('T')[0], is_recurring: false, notes: '' })
-    loadData()
+    setTxForm({ description: '', amount: '', type: 'expense', category_id: '', date: new Date().toISOString().split('T')[0] })
+    load()
   }
 
-  const deleteTransaction = async (id: string, accountId?: string, type?: string, amount?: number) => {
+  const deleteTx = async (id: string) => {
     await supabase.from('transactions').delete().eq('id', id)
-    if (accountId && type && amount) {
-      const acc = accounts.find(a => a.id === accountId)
-      if (acc) {
-        const newBalance = type === 'income' ? acc.balance - amount : acc.balance + amount
-        await supabase.from('accounts').update({ balance: newBalance }).eq('id', accountId)
-      }
-    }
-    loadData()
+    sounds.delete()
+    load()
   }
 
-  const exportCSV = () => {
-    const headers = ['Fecha', 'Descripción', 'Tipo', 'Categoría', 'Monto', 'Notas']
-    const rows = transactions.map(t => [
-      new Date(t.date).toLocaleDateString('es-MX'),
-      t.description,
-      t.type === 'income' ? 'Ingreso' : 'Gasto',
-      t.categories?.name || 'Sin categoría',
-      t.amount.toFixed(2),
-      t.notes || ''
-    ])
-    const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `flowfin_${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-  }
+  const tip = FINANCIAL_TIPS[new Date().getDate() % FINANCIAL_TIPS.length]
 
-  const financialHealth = useMemo(() => {
-    const savingsRate = stats.income > 0 ? ((stats.income - stats.expenses) / stats.income) * 100 : 0
-    const debtRatio = stats.balance > 0 ? (stats.debts / stats.balance) * 100 : 100
-    let score = 50
-    if (savingsRate > 20) score += 20
-    else if (savingsRate > 10) score += 10
-    if (debtRatio < 30) score += 15
-    else if (debtRatio < 60) score += 5
-    if (stats.income > stats.expenses) score += 15
-    return Math.min(Math.max(score, 0), 100)
-  }, [stats])
-
-  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
-  const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }
+  const expenseCats = useMemo(() => {
+    const map: Record<string, number> = {}
+    monthTxs.filter(t => t.type === 'expense').forEach(t => { const c = getCategory(t.category_id); map[c.name] = (map[c.name] || 0) + t.amount })
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  }, [monthTxs])
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show">
-      {/* Header */}
-      <motion.div variants={item} className="mb-6 lg:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Greeting */}
+      <div>
+        <h1 className="text-2xl font-extrabold text-gray-900">Hola, {user?.name?.split(' ')[0]} 👋</h1>
+        <p className="text-gray-400 text-sm mt-0.5">{new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+      </div>
+
+      {/* Health Score */}
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
+        className={cn('rounded-2xl p-5 text-white relative overflow-hidden',
+          analysis.score >= 70 ? 'gradient-success' : analysis.score >= 40 ? 'gradient-warm' : 'gradient-danger')}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+        <div className="flex items-center justify-between relative z-10">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-              Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
-            </h1>
-            <p className="text-gray-500 mt-1">Resumen financiero de {new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}</p>
+            <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-1">Salud financiera</p>
+            <p className="text-4xl font-black">{analysis.score}%</p>
+            <p className="text-white/70 text-xs mt-1">{analysis.health}</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={exportCSV} variant="outline" size="sm" className="border-gray-200">
-              <Download size={14} className="mr-1.5" /> Exportar
-            </Button>
-            <Button onClick={() => setShowTxModal(true)} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-200">
-              <Plus size={16} className="mr-1.5" /> Nuevo
-            </Button>
+          <div className="text-right space-y-1">
+            <p className="text-white/80 text-xs">Ahorro: <b>{analysis.savingsRate.toFixed(0)}%</b></p>
+            <p className="text-white/80 text-xs">Categoría top: <b>{analysis.topCategory}</b></p>
+            <p className="text-white/80 text-xs">Gasto diario: <b>{formatCurrency(analysis.avgDaily)}</b></p>
           </div>
+        </div>
+        {/* Score bar */}
+        <div className="mt-4 w-full bg-white/20 rounded-full h-2 relative z-10">
+          <motion.div initial={{ width: 0 }} animate={{ width: `${analysis.score}%` }} transition={{ delay: 0.3, duration: 1 }}
+            className="h-2 rounded-full bg-white/80" />
         </div>
       </motion.div>
 
-      {/* Financial Health Score */}
-      <motion.div variants={item} className="mb-6">
-        <div className={cn(
-          'rounded-2xl p-5 text-white shadow-lg',
-          financialHealth >= 70 ? 'bg-gradient-to-r from-emerald-500 to-green-600' :
-          financialHealth >= 40 ? 'bg-gradient-to-r from-amber-500 to-orange-600' :
-          'bg-gradient-to-r from-red-500 to-rose-600'
-        )}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-white/80 text-sm mb-1">Salud financiera</p>
-              <p className="text-4xl font-bold">{financialHealth}%</p>
-              <p className="text-white/70 text-xs mt-1">
-                {financialHealth >= 70 ? '🎉 ¡Excelente! Vas muy bien' :
-                 financialHealth >= 40 ? '⚡ Bien, pero puedes mejorar' :
-                 '⚠️ Necesitas atención urgente'}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-white/70 text-xs">Ahorro: {stats.income > 0 ? (((stats.income - stats.expenses) / stats.income) * 100).toFixed(0) : 0}%</p>
-              <p className="text-white/70 text-xs">Deuda: {formatCurrency(stats.debts)}</p>
-              <p className="text-white/70 text-xs">Patrimonio: {formatCurrency(stats.netWorth)}</p>
-            </div>
+      {/* Tip */}
+      {showTip && (
+        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+          className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Lightbulb size={18} className="text-amber-600" />
           </div>
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 text-sm">{tip.title}</p>
+            <p className="text-xs text-amber-600 mt-0.5">{tip.desc}</p>
+          </div>
+          <button onClick={() => setShowTip(false)} className="p-1 hover:bg-amber-100 rounded-lg"><X size={14} className="text-amber-400" /></button>
+        </motion.div>
+      )}
+
+      {/* Summary Cards */}
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }} className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 card-hover">
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Ingresos</p>
+          <p className="text-base font-bold text-emerald-600">{formatCurrency(monthIncome)}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 card-hover">
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Gastos</p>
+          <p className="text-base font-bold text-red-600">{formatCurrency(monthExpense)}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 card-hover">
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Balance</p>
+          <p className={cn('text-base font-bold', monthIncome - monthExpense >= 0 ? 'text-indigo-600' : 'text-red-600')}>{formatCurrency(monthIncome - monthExpense)}</p>
         </div>
       </motion.div>
 
-      {/* Stats Cards */}
-      <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
-        <StatCard title="Patrimonio" value={formatCurrency(stats.netWorth)} icon={Wallet} color="from-indigo-500 to-purple-600" bgColor="bg-indigo-50" textColor="text-indigo-600" />
-        <StatCard title="Ingresos del mes" value={formatCurrency(stats.income)} icon={ArrowUpRight} color="from-emerald-500 to-green-600" bgColor="bg-emerald-50" textColor="text-emerald-600" />
-        <StatCard title="Gastos del mes" value={formatCurrency(stats.expenses)} icon={ArrowDownRight} color="from-red-500 to-rose-600" bgColor="bg-red-50" textColor="text-red-600" />
-        <StatCard title="Ahorro" value={formatCurrency(stats.savings)} icon={PiggyBank} color="from-amber-500 to-orange-600" bgColor="bg-amber-50" textColor="text-amber-600" />
+      {/* Quick Actions */}
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="flex gap-3">
+        <button onClick={() => { setShowTxModal(true); sounds.click() }}
+          className="flex-1 gradient-primary text-white font-semibold h-12 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
+          <Plus size={18} /> Nuevo movimiento
+        </button>
+        <Link to="/calendar" className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center card-hover shadow-sm">
+          <Calendar size={18} className="text-gray-600" />
+        </Link>
+        <Link to="/reports" className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center card-hover shadow-sm">
+          <Filter size={18} className="text-gray-600" />
+        </Link>
       </motion.div>
 
-      {/* Accounts Summary */}
-      {accounts.length > 0 && (
-        <motion.div variants={item} className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Mis cuentas</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {accounts.map((acc) => (
-              <div key={acc.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: acc.color + '20' }}>
-                    <Wallet size={14} style={{ color: acc.color }} />
+      {/* Category breakdown */}
+      {expenseCats.length > 0 && (
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">Gastos por categoría</h2>
+            <Link to="/reports" className="text-xs text-indigo-600 font-semibold">Ver todo →</Link>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {expenseCats.map(([name, amount], i) => {
+              const cat = getCategory(txs.find(t => t.type === 'expense' && getCategory(t.category_id).name === name)?.category_id || '')
+              const pct = monthExpense > 0 ? (amount / monthExpense) * 100 : 0
+              return (
+                <div key={name} className="flex items-center gap-3 p-3.5 hover:bg-gray-50/50 transition-colors">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base" style={{ backgroundColor: cat.color + '15' }}>
+                    {cat.icon}
                   </div>
-                  <span className="text-xs text-gray-500 truncate">{acc.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1.5">
+                      <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-gray-900">{formatCurrency(amount)}</p>
+                    <p className="text-[10px] text-gray-400">{pct.toFixed(0)}%</p>
+                  </div>
                 </div>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(acc.balance || 0)}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </motion.div>
       )}
 
-      {/* Transactions */}
-      <motion.div variants={item}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Movimientos recientes</h2>
-          <div className="flex gap-2">
-            <button onClick={() => setShowFilters(!showFilters)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <Filter size={16} className="text-gray-500" />
-            </button>
-          </div>
+      {/* Recent transactions */}
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-gray-900">Últimos movimientos</h2>
+          <Link to="/transactions" className="text-xs text-indigo-600 font-semibold">Ver todo <ChevronRight size={12} className="inline" /></Link>
         </div>
-
-        {/* Filters */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-4">
-              <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm space-y-3">
-                <div className="relative">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar movimiento..." className="pl-9" />
-                </div>
-                <div className="flex gap-2">
-                  {[
-                    { key: 'all', label: 'Todos' },
-                    { key: 'income', label: 'Ingresos' },
-                    { key: 'expense', label: 'Gastos' },
-                  ].map(f => (
-                    <button key={f.key} onClick={() => setFilterType(f.key)}
-                      className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                        filterType === f.key ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      )}>
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center text-gray-400">Cargando...</div>
-          ) : filteredTransactions.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-400 mb-2">{searchQuery ? 'No se encontraron resultados' : 'No hay movimientos este mes'}</p>
-              {!searchQuery && (
-                <Button onClick={() => setShowTxModal(true)} variant="outline" size="sm">
-                  Agrega tu primer movimiento →
-                </Button>
-              )}
+        {loading ? <div className="text-center py-8 text-gray-300">Cargando...</div>
+          : txs.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+              <p className="text-4xl mb-2">💸</p>
+              <p className="text-gray-400 text-sm">Agrega tu primer movimiento</p>
+              <button onClick={() => setShowTxModal(true)} className="mt-3 px-5 py-2 gradient-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-200">
+                Agregar ahora
+              </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {filteredTransactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors group">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
-                      tx.type === 'income' ? 'bg-emerald-50' : tx.type === 'transfer' ? 'bg-blue-50' : 'bg-red-50'
-                    )}>
-                      {tx.type === 'income' ? <ArrowUpRight size={18} className="text-emerald-600" /> :
-                       tx.type === 'transfer' ? <ArrowRightLeft size={18} className="text-blue-600" /> :
-                       <ArrowDownRight size={18} className="text-red-600" />}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{tx.description}</p>
-                      <p className="text-xs text-gray-400">
-                        {tx.categories?.name || tx.category}
-                        {tx.is_recurring && <span className="ml-1 text-indigo-500">🔄 Recurrente</span>}
-                        {tx.accounts && <span className="ml-1">• {tx.accounts.name}</span>}
-                        {' • '}{formatShortDate(tx.date)}
-                      </p>
-                      {tx.notes && <p className="text-xs text-gray-400 truncate mt-0.5">{tx.notes}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={cn(
-                      'font-semibold text-sm',
-                      tx.type === 'income' ? 'text-emerald-600' : tx.type === 'transfer' ? 'text-blue-600' : 'text-red-600'
-                    )}>
-                      {tx.type === 'income' ? '+' : tx.type === 'transfer' ? '' : '-'}{formatCurrency(Math.abs(tx.amount))}
-                    </span>
-                    <button onClick={() => deleteTransaction(tx.id, tx.account_id, tx.type, tx.amount)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded-lg">
-                      <Trash2 size={14} className="text-red-400" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <AnimatePresence>
+                {txs.slice(0, 10).map((tx, i) => {
+                  const cat = getCategory(tx.category_id)
+                  return (
+                    <motion.div key={tx.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+                      className="flex items-center justify-between p-3.5 hover:bg-gray-50/50 transition-colors group">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base" style={{ backgroundColor: cat.color + '15' }}>
+                          {cat.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{tx.description}</p>
+                          <p className="text-[11px] text-gray-400">{cat.name} • {formatDate(tx.date)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={cn('text-sm font-bold', tx.type === 'income' ? 'text-emerald-600' : 'text-red-600')}>
+                          {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                        </span>
+                        <button onClick={() => deleteTx(tx.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded-lg">
+                          <X size={14} className="text-red-400" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
             </div>
           )}
-        </div>
       </motion.div>
 
       {/* Transaction Modal */}
-      {showTxModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">Nuevo movimiento</h3>
-              <button onClick={() => setShowTxModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
-            </div>
-            <div className="space-y-4">
-              {/* Type selector */}
-              <div className="flex gap-2">
-                {[
-                  { key: 'expense', label: 'Gasto', color: 'red' },
-                  { key: 'income', label: 'Ingreso', color: 'emerald' },
-                  { key: 'transfer', label: 'Transferencia', color: 'blue' },
-                ].map(t => (
-                  <button key={t.key} onClick={() => setTxForm({ ...txForm, type: t.key })}
-                    className={cn('flex-1 py-2 rounded-lg font-medium text-sm transition-all',
-                      txForm.type === t.key
-                        ? t.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-300' :
-                          t.color === 'blue' ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300' :
-                          'bg-red-100 text-red-700 ring-2 ring-red-300'
-                        : 'bg-gray-100 text-gray-500'
-                    )}>
-                    {t.label}
-                  </button>
-                ))}
+      <AnimatePresence>
+        {showTxModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end lg:items-center justify-center" onClick={() => setShowTxModal(false)}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }}
+              className="bg-white rounded-t-3xl lg:rounded-3xl w-full lg:max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white/90 backdrop-blur-xl px-6 pt-4 pb-3 border-b border-gray-100 z-10">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900">Nuevo movimiento</h3>
+                  <button onClick={() => setShowTxModal(false)} className="p-2 hover:bg-gray-100 rounded-xl"><X size={18} className="text-gray-400" /></button>
+                </div>
               </div>
+              <div className="p-6 space-y-4">
+                {/* Type toggle */}
+                <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
+                  {[{ k: 'expense', l: '💸 Gasto', c: 'bg-red-500 text-white' }, { k: 'income', l: '💰 Ingreso', c: 'bg-emerald-500 text-white' }].map(t => (
+                    <button key={t.k} onClick={() => setTxForm({ ...txForm, type: t.k })}
+                      className={cn('flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all',
+                        txForm.type === t.k ? t.c : 'text-gray-500')}>{t.l}</button>
+                  ))}
+                </div>
 
-              <div>
-                <Label>Descripción</Label>
-                <Input value={txForm.description} onChange={(e) => setTxForm({ ...txForm, description: e.target.value })} placeholder="Ej: Salario mensual, Supermercado..." />
-              </div>
-              <div>
-                <Label>Monto ($)</Label>
-                <Input type="number" value={txForm.amount} onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })} placeholder="0.00" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Categoría</Label>
-                  <select value={txForm.category_id} onChange={(e) => setTxForm({ ...txForm, category_id: e.target.value })} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="">Sin categoría</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <input value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })}
+                    placeholder="¿En qué gastaste?" className="w-full h-12 rounded-xl border border-gray-200 px-4 text-sm focus:border-indigo-400" />
                 </div>
+
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                  <input type="number" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })}
+                    placeholder="0.00" className="w-full h-12 rounded-xl border border-gray-200 pl-8 pr-4 text-lg font-bold focus:border-indigo-400" />
+                </div>
+
+                {/* Category picker */}
                 <div>
-                  <Label>Cuenta</Label>
-                  <select value={txForm.account_id} onChange={(e) => setTxForm({ ...txForm, account_id: e.target.value })} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="">Sin cuenta</option>
-                    {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Categoría</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {CATEGORIES.filter(c => c.type === txForm.type).map(c => (
+                      <button key={c.id} onClick={() => setTxForm({ ...txForm, category_id: c.id })}
+                        className={cn('flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all text-xs',
+                          txForm.category_id === c.id ? 'bg-indigo-50 ring-2 ring-indigo-400 scale-95' : 'bg-gray-50 hover:bg-gray-100')}>
+                        <span className="text-xl">{c.icon}</span>
+                        <span className="text-[10px] text-gray-600 leading-tight">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Fecha</p>
+                  <input type="date" value={txForm.date} onChange={e => setTxForm({ ...txForm, date: e.target.value })}
+                    className="w-full h-10 rounded-xl border border-gray-200 px-3 text-sm" />
+                </div>
+
+                <button onClick={addTx} className="w-full gradient-primary text-white font-bold h-12 rounded-xl shadow-lg shadow-indigo-200 text-base">
+                  Guardar
+                </button>
               </div>
-              <div>
-                <Label>Fecha</Label>
-                <Input type="date" value={txForm.date} onChange={(e) => setTxForm({ ...txForm, date: e.target.value })} />
-              </div>
-              <div>
-                <Label>Notas (opcional)</Label>
-                <Input value={txForm.notes} onChange={(e) => setTxForm({ ...txForm, notes: e.target.value })} placeholder="Detalles adicionales..." />
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={txForm.is_recurring} onChange={(e) => setTxForm({ ...txForm, is_recurring: e.target.checked })} className="w-4 h-4 rounded" />
-                <span className="text-sm text-gray-600">🔄 Transacción recurrente</span>
-              </label>
-              <Button onClick={addTransaction} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
-                Guardar movimiento
-              </Button>
-            </div>
+            </motion.div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
 
-function StatCard({ title, value, icon: Icon, bgColor, textColor }: any) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{title}</span>
-        <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center', bgColor)}>
-          <Icon size={16} className={textColor} />
-        </div>
-      </div>
-      <p className="text-xl lg:text-2xl font-bold text-gray-900">{value}</p>
-    </div>
-  )
-}
+// Categories
+const CATEGORIES = [
+  { id: 'cat_food', name: 'Comida', type: 'expense', color: '#EF4444', icon: '🍔' },
+  { id: 'cat_transport', name: 'Transporte', type: 'expense', color: '#F59E0B', icon: '🚗' },
+  { id: 'cat_home', name: 'Vivienda', type: 'expense', color: '#8B5CF6', icon: '🏠' },
+  { id: 'cat_fun', name: 'Ocio', type: 'expense', color: '#EC4899', icon: '🎮' },
+  { id: 'cat_health', name: 'Salud', type: 'expense', color: '#10B981', icon: '💊' },
+  { id: 'cat_education', name: 'Edu', type: 'expense', color: '#3B82F6', icon: '📚' },
+  { id: 'cat_clothes', name: 'Ropa', type: 'expense', color: '#6366F1', icon: '👕' },
+  { id: 'cat_services', name: 'Servicios', type: 'expense', color: '#64748B', icon: '⚡' },
+  { id: 'cat_restaurant', name: 'Rest.', type: 'expense', color: '#F97316', icon: '☕' },
+  { id: 'cat_super', name: 'Super', type: 'expense', color: '#14B8A6', icon: '🛒' },
+  { id: 'cat_gas', name: 'Gasolina', type: 'expense', color: '#D97706', icon: '⛽' },
+  { id: 'cat_beauty', name: 'Belleza', type: 'expense', color: '#E11D48', icon: '✨' },
+  { id: 'cat_gifts', name: 'Regalos', type: 'expense', color: '#7C3AED', icon: '🎁' },
+  { id: 'cat_other_exp', name: 'Otros', type: 'expense', color: '#78716C', icon: '📦' },
+  { id: 'cat_salary', name: 'Salario', type: 'income', color: '#10B981', icon: '💼' },
+  { id: 'cat_freelance', name: 'Freelance', type: 'income', color: '#06B6D4', icon: '💻' },
+  { id: 'cat_business', name: 'Negocio', type: 'income', color: '#F59E0B', icon: '🏪' },
+  { id: 'cat_invest', name: 'Inversión', type: 'income', color: '#8B5CF6', icon: '📈' },
+  { id: 'cat_sales', name: 'Ventas', type: 'income', color: '#D97706', icon: '🏷️' },
+  { id: 'cat_other_inc', name: 'Otros', type: 'income', color: '#64748B', icon: '💰' },
+]
