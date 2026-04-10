@@ -17,7 +17,8 @@
       "Bash(rmdir *)",
       "Bash(del *)",
       "Bash(vercel *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(timeout *)"
     ]
   },
   "$version": 3
