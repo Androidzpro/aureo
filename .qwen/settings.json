@@ -16,7 +16,8 @@
       "Bash(xcopy *)",
       "Bash(rmdir *)",
       "Bash(del *)",
-      "Bash(vercel *)"
+      "Bash(vercel *)",
+      "Bash(curl *)"
     ]
   },
   "$version": 3
