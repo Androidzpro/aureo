@@ -18,7 +18,7 @@ interface AuthState {
   register: (name: string, email: string, password: string) => Promise<void>
 }
 
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,

@@ -38,7 +38,7 @@ export default function LoginPage() {
       await login(data.email, data.password)
       navigate('/')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.')
+      setError(err?.message || 'Invalid credentials. Please try again.')
     } finally {
       setIsLoading(false)
     }
