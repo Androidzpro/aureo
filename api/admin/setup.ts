@@ -4,7 +4,8 @@ import bcrypt from 'bcrypt'
 const prisma = new PrismaClient()
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
+  // Allow GET or POST
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
@@ -18,8 +19,9 @@ export default async function handler(req: any, res: any) {
     if (existing) {
       return res.status(200).json({
         success: true,
-        message: 'Admin user already exists',
-        credentials: { email, password: 'Use the same password' },
+        message: 'Admin user exists',
+        email: email,
+        password: 'Use the password you set',
       })
     }
 
@@ -32,10 +34,14 @@ export default async function handler(req: any, res: any) {
 
     res.status(201).json({
       success: true,
-      message: 'Admin user created successfully',
-      credentials: { email, password },
+      message: 'Admin user created',
+      email: email,
+      password: password,
     })
   } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    })
   }
 }
