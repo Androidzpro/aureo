@@ -1,0 +1,42 @@
+{
+  "name": "aureo",
+  "version": "1.0.0",
+  "description": "Aureo - Personal Financial Management Web Application",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "build": "npm run build --workspaces",
+    "build:client": "npm run build --workspace=client",
+    "build:server": "npm run build --workspace=server",
+    "start": "npm run start --workspace=server",
+    "lint": "npm run lint --workspaces",
+    "db:migrate": "npm run db:migrate --workspace=server",
+    "db:generate": "npm run db:generate --workspace=server",
+    "db:studio": "npm run db:studio --workspace=server"
+  },
+  "keywords": [
+    "finance",
+    "personal-finance",
+    "money-management",
+    "react",
+    "express",
+    "typescript",
+    "prisma",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

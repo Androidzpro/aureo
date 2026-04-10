@@ -1,0 +1,73 @@
+cd C:\xampp\htdocs\fortuna\server
+
+# Generar Prisma Client
+npx prisma generate
+
+# Ejecutar migraciones a Supabase
+npx prisma migrate dev --name init
+
+# Si pide "reset database", di que SÍ (yes)
+
+cd ..
+
+# Iniciar la aplicación
+npm run dev# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Production
+build/
+dist/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Prisma
+prisma/migrations/
+
+# Misc
+.turbo
+.vercel
