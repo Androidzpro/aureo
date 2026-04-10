@@ -1,49 +1,95 @@
+// Tipos de FlowFin
 export interface User {
   id: string
   email: string
   name: string
-  createdAt: string
+  created_at: string
 }
 
 export interface Transaction {
   id: string
-  userId: string
+  user_id: string
+  account_id?: string
+  category_id?: string
+  type: 'income' | 'expense' | 'transfer'
   amount: number
-  type: 'income' | 'expense'
-  category: string
   description: string
+  notes?: string
   date: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface Budget {
-  id: string
-  userId: string
-  category: string
-  amount: number
-  period: 'weekly' | 'monthly' | 'yearly'
-  startDate: string
-  endDate: string
-  createdAt: string
-  updatedAt: string
+  is_recurring: boolean
+  recurrence_type?: string
+  category?: Category
+  account?: Account
+  created_at: string
 }
 
 export interface Category {
   id: string
+  user_id?: string
   name: string
+  type: 'income' | 'expense'
   color: string
   icon: string
-  type: 'income' | 'expense'
+  monthly_limit?: number
+  created_at: string
 }
 
-export interface AuthResponse {
-  user: User
-  token: string
+export interface Account {
+  id: string
+  user_id: string
+  name: string
+  type: string
+  balance: number
+  color: string
+  icon: string
+  is_active: boolean
+  created_at: string
 }
 
-export interface ApiResponse<T> {
-  data: T
-  message: string
-  success: boolean
+export interface Budget {
+  id: string
+  user_id: string
+  category_id: string
+  amount: number
+  period: string
+  month: number
+  year: number
+  created_at: string
+}
+
+export interface Debt {
+  id: string
+  user_id: string
+  name: string
+  total_amount: number
+  paid_amount: number
+  interest_rate: number
+  min_payment?: number
+  due_date?: string
+  creditor?: string
+  status: 'active' | 'paid' | 'cancelled'
+  notes?: string
+  created_at: string
+}
+
+export interface DebtPayment {
+  id: string
+  debt_id: string
+  amount: number
+  date: string
+  notes?: string
+  created_at: string
+}
+
+export interface SavingsGoal {
+  id: string
+  user_id: string
+  name: string
+  target_amount: number
+  current_amount: number
+  deadline?: string
+  color: string
+  icon: string
+  is_active: boolean
+  created_at: string
 }
