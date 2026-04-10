@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster } from '@/components/ui/toast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Layout from '@/components/Layout'
 import HomePage from '@/pages/HomePage'
