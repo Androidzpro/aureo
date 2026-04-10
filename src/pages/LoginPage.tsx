@@ -21,6 +21,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   
   const {
     register,
@@ -33,10 +34,11 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true)
+      setError('')
       await login(data.email, data.password)
       navigate('/')
-    } catch (error) {
-      console.error('Login failed:', error)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -91,6 +93,12 @@ export default function LoginPage() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          {error && (
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive rounded-lg text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <div className="mt-4 text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>

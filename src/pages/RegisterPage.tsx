@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/components/ui/toast'
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -26,6 +27,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { register: registerUser } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   
   const {
     register,
@@ -38,10 +40,11 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setIsLoading(true)
+      setError('')
       await registerUser(data.name, data.email, data.password)
       navigate('/')
-    } catch (error) {
-      console.error('Registration failed:', error)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -121,6 +124,12 @@ export default function RegisterPage() {
               {isLoading ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>
+
+          {error && (
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive rounded-lg text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <div className="mt-4 text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
