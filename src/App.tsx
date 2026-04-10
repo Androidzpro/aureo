@@ -6,6 +6,8 @@ import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import TransactionsPage from '@/pages/TransactionsPage'
 import CalendarPage from '@/pages/CalendarPage'
+import DebtsPage from '@/pages/DebtsPage'
+import GoalsPage from '@/pages/GoalsPage'
 import ReportsPage from '@/pages/ReportsPage'
 import SettingsPage from '@/pages/SettingsPage'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -20,6 +22,8 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="calendar" element={<CalendarPage />} />
+          <Route path="debts" element={<DebtsPage />} />
+          <Route path="goals" element={<GoalsPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

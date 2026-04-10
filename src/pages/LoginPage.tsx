@@ -36,10 +36,10 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.1 }}
-            className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-200 mx-auto mb-4">
-            <span className="text-white font-black text-2xl">F</span>
+            className="w-20 h-20 rounded-2xl overflow-hidden shadow-xl shadow-indigo-200 mx-auto mb-4">
+            <img src="/logo.svg" alt="FlowFin" className="w-full h-full object-cover" />
           </motion.div>
-          <h1 className="text-2xl font-extrabold text-gradient">FlowFin</h1>
+          <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">FlowFin</h1>
           <p className="text-gray-400 text-sm mt-1">Bienvenido de vuelta</p>
         </div>
 

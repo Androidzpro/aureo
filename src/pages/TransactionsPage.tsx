@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X, Search, ArrowUpRight, ArrowDownRight } from 'lucide-react'
-import { supabase, getCategory, formatCurrency, formatDate, sounds, cn, CATEGORIES } from '@/lib/data'
+import { supabase, getCat as getCat, formatCurrency, formatDate, playSound, cn, CATS } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 
@@ -24,7 +24,7 @@ export default function TransactionsPage() {
 
   const filtered = useMemo(() => txs.filter(t => {
     if (typeFilter !== 'all' && t.type !== typeFilter) return false
-    if (search) { const c = getCategory(t.category_id); return !t.description.toLowerCase().includes(search.toLowerCase()) && !c.name.toLowerCase().includes(search.toLowerCase()) }
+    if (search) { const c = getCat(t.category_id); return !t.description.toLowerCase().includes(search.toLowerCase()) && !c.name.toLowerCase().includes(search.toLowerCase()) }
     return true
   }), [txs, search, typeFilter])
 
@@ -79,7 +79,7 @@ export default function TransactionsPage() {
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">{date}</p>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {items.map(tx => {
-                  const cat = getCategory(tx.category_id)
+                  const cat = getCat(tx.category_id)
                   return (
                     <motion.div key={tx.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                       className="flex items-center justify-between p-3.5 hover:bg-gray-50/50 group">
@@ -124,7 +124,7 @@ export default function TransactionsPage() {
                 <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                   <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} placeholder="0.00" className="w-full h-12 rounded-xl border border-gray-200 pl-8 pr-4 text-lg font-bold" /></div>
                 <div className="grid grid-cols-4 gap-2">
-                  {CATEGORIES.filter(c => c.type === form.type).slice(0, 8).map(c => (
+                  {(form.type === 'expense' ? CATS.expenses : CATS.incomes).slice(0, 8).map(c => (
                     <button key={c.id} onClick={() => setForm({ ...form, category_id: c.id })}
                       className={cn('flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all', form.category_id === c.id ? 'bg-indigo-50 ring-2 ring-indigo-400' : 'bg-gray-50')}>
                       <span className="text-xl">{c.icon}</span><span className="text-[10px] text-gray-600">{c.name}</span></button>

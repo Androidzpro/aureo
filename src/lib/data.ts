@@ -5,96 +5,99 @@ export const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliZ212cHJwaGhkdHhubGV4a2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAyMTksImV4cCI6MjA5MTQwNjIxOX0.wDi6SST4rxDSfwNGj9pv4Ks4UD14bQEB4RdC6YMT2Aw'
 )
 
-// CATEGORÍAS EMBEBIDAS (funciona sin tabla categories)
-export const CATEGORIES = [
-  // Gastos
-  { id: 'cat_food', name: 'Alimentación', type: 'expense', color: '#EF4444', icon: '🍔' },
-  { id: 'cat_transport', name: 'Transporte', type: 'expense', color: '#F59E0B', icon: '🚗' },
-  { id: 'cat_home', name: 'Vivienda', type: 'expense', color: '#8B5CF6', icon: '🏠' },
-  { id: 'cat_fun', name: 'Entretenimiento', type: 'expense', color: '#EC4899', icon: '🎮' },
-  { id: 'cat_health', name: 'Salud', type: 'expense', color: '#10B981', icon: '💊' },
-  { id: 'cat_education', name: 'Educación', type: 'expense', color: '#3B82F6', icon: '📚' },
-  { id: 'cat_clothes', name: 'Ropa', type: 'expense', color: '#6366F1', icon: '👕' },
-  { id: 'cat_services', name: 'Servicios', type: 'expense', color: '#64748B', icon: '⚡' },
-  { id: 'cat_subs', name: 'Suscripciones', type: 'expense', color: '#A855F7', icon: '🔄' },
-  { id: 'cat_restaurant', name: 'Restaurantes', type: 'expense', color: '#F97316', icon: '☕' },
-  { id: 'cat_super', name: 'Supermercado', type: 'expense', color: '#14B8A6', icon: '🛒' },
-  { id: 'cat_gas', name: 'Gasolina', type: 'expense', color: '#D97706', icon: '⛽' },
-  { id: 'cat_beauty', name: 'Belleza', type: 'expense', color: '#E11D48', icon: '✨' },
-  { id: 'cat_gifts', name: 'Regalos', type: 'expense', color: '#7C3AED', icon: '🎁' },
-  { id: 'cat_pets', name: 'Mascotas', type: 'expense', color: '#D946EF', icon: '🐾' },
-  { id: 'cat_other_exp', name: 'Otros', type: 'expense', color: '#78716C', icon: '📦' },
-  // Ingresos
-  { id: 'cat_salary', name: 'Salario', type: 'income', color: '#10B981', icon: '💼' },
-  { id: 'cat_freelance', name: 'Freelance', type: 'income', color: '#06B6D4', icon: '💻' },
-  { id: 'cat_business', name: 'Negocio', type: 'income', color: '#F59E0B', icon: '🏪' },
-  { id: 'cat_invest', name: 'Inversiones', type: 'income', color: '#8B5CF6', icon: '📈' },
-  { id: 'cat_sales', name: 'Ventas', type: 'income', color: '#D97706', icon: '🏷️' },
-  { id: 'cat_other_inc', name: 'Otros', type: 'income', color: '#64748B', icon: '💰' },
-]
-
-export function getCategory(id: string) {
-  return CATEGORIES.find(c => c.id === id) || { name: 'Sin categoría', color: '#64748B', icon: '📦' }
+// ===== CATEGORÍAS CON EMOJIS =====
+export const CATS = {
+  expenses: [
+    { id: 'food', name: 'Comida', icon: '🍔', color: '#EF4444' },
+    { id: 'transport', name: 'Transporte', icon: '🚗', color: '#F59E0B' },
+    { id: 'home', name: 'Vivienda', icon: '🏠', color: '#8B5CF6' },
+    { id: 'fun', name: 'Entretenimiento', icon: '🎮', color: '#EC4899' },
+    { id: 'health', name: 'Salud', icon: '💊', color: '#10B981' },
+    { id: 'edu', name: 'Educación', icon: '📚', color: '#3B82F6' },
+    { id: 'clothes', name: 'Ropa', icon: '👕', color: '#6366F1' },
+    { id: 'services', name: 'Servicios', icon: '⚡', color: '#64748B' },
+    { id: 'subs', name: 'Suscripciones', icon: '🔄', color: '#A855F7' },
+    { id: 'restaurant', name: 'Restaurantes', icon: '☕', color: '#F97316' },
+    { id: 'super', name: 'Supermercado', icon: '🛒', color: '#14B8A6' },
+    { id: 'gas', name: 'Gasolina', icon: '⛽', color: '#D97706' },
+    { id: 'beauty', name: 'Belleza', icon: '✨', color: '#E11D48' },
+    { id: 'gifts', name: 'Regalos', icon: '🎁', color: '#7C3AED' },
+    { id: 'pets', name: 'Mascotas', icon: '🐾', color: '#D946EF' },
+    { id: 'debts', name: 'Deudas', icon: '💳', color: '#DC2626' },
+    { id: 'other_exp', name: 'Otros', icon: '📦', color: '#78716C' },
+  ],
+  incomes: [
+    { id: 'salary', name: 'Salario', icon: '💼', color: '#10B981' },
+    { id: 'freelance', name: 'Freelance', icon: '💻', color: '#06B6D4' },
+    { id: 'business', name: 'Negocio', icon: '🏪', color: '#F59E0B' },
+    { id: 'invest', name: 'Inversiones', icon: '📈', color: '#8B5CF6' },
+    { id: 'sales', name: 'Ventas', icon: '🏷️', color: '#D97706' },
+    { id: 'other_inc', name: 'Otros', icon: '💰', color: '#64748B' },
+  ],
 }
 
-// CONSEJOS INTELIGENTES
-export const FINANCIAL_TIPS = [
-  { icon: '💡', title: 'Regla 50/30/20', desc: 'Destina 50% a necesidades, 30% a deseos y 20% a ahorro.' },
-  { icon: '🎯', title: 'Fondo de emergencia', desc: 'Ahorra al menos 3 meses de gastos básicos.' },
-  { icon: '🚫', title: 'Elimina deudas', desc: 'Paga primero las deudas con mayor tasa de interés.' },
-  { icon: '📊', title: 'Revisa tus gastos', desc: 'Revisa tus gastos semanalmente para mantenerte al día.' },
-  { icon: '💳', title: 'Evita gastos hormiga', desc: 'Los pequeños gastos diarios suman miles al año.' },
-  { icon: '🏦', title: 'Ahorra primero', desc: 'Ahorra al recibir tu ingreso, no lo que sobra.' },
-  { icon: '📱', title: 'Compara precios', desc: 'Antes de comprar, busca alternativas más económicas.' },
-  { icon: '🔄', title: 'Cancela suscripciones', desc: 'Revisa y cancela las suscripciones que no uses.' },
-  { icon: '🍳', title: 'Cocina en casa', desc: 'Preparar comida en casa puede ahorrarte hasta 40%.' },
-  { icon: '📅', title: 'Presupuesto mensual', desc: 'Planifica tus gastos antes de que llegue el mes.' },
+export function getCat(id: string) {
+  const all = [...CATS.expenses, ...CATS.incomes]
+  return all.find(c => c.id === id) || { name: 'Sin categoría', icon: '📦', color: '#64748B' }
+}
+
+// ===== TIPS INTELIGENTES =====
+export const TIPS = [
+  { icon: '💡', title: 'Regla 50/30/20', desc: '50% necesidades, 30% deseos, 20% ahorro.' },
+  { icon: '🎯', title: 'Fondo de emergencia', desc: 'Ahorra 3-6 meses de gastos básicos.' },
+  { icon: '🚫', title: 'Elimina deudas caras', desc: 'Paga primero las deudas con mayor interés.' },
+  { icon: '📊', title: 'Revisa semanalmente', desc: '5 min semanales te ahorran miles al año.' },
+  { icon: '💸', title: 'Gastos hormiga', desc: 'Un café diario de $50 = $18,250 al año.' },
+  { icon: '🏦', title: 'Ahorra primero', desc: 'Separa el ahorro al recibir, no al final.' },
+  { icon: '🔄', title: 'Cancela lo que no usas', desc: 'Revisa suscripciones mensuales.' },
+  { icon: '🍳', title: 'Cocina en casa', desc: 'Ahorra hasta 40% vs comer fuera.' },
+  { icon: '📅', title: 'Presupuesto mensual', desc: 'Planifica antes de que llegue el mes.' },
+  { icon: '🎓', title: 'Educa tu dinero', desc: 'Aprende sobre inversiones cada mes.' },
+  { icon: '🏆', title: 'Celebra logros', desc: 'Cada deuda pagada es una victoria.' },
+  { icon: '📱', title: 'Compara antes de comprar', desc: 'Busca alternativas más baratas.' },
 ]
 
-// SONIDOS (Web Audio API)
-export const sounds = {
-  success: () => {
-    try {
-      const ctx = new AudioContext()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain); gain.connect(ctx.destination)
+// ===== SONIDOS (Web Audio API) =====
+export const playSound = (type: 'success' | 'delete' | 'click' | 'achieve') => {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain); gain.connect(ctx.destination)
+    
+    if (type === 'success') {
       osc.frequency.setValueAtTime(523.25, ctx.currentTime)
       osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1)
-      gain.gain.setValueAtTime(0.15, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3)
-    } catch {}
-  },
-  delete: () => {
-    try {
-      const ctx = new AudioContext()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain); gain.connect(ctx.destination)
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(400, ctx.currentTime)
+      osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2)
+      gain.gain.setValueAtTime(0.12, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4)
+    } else if (type === 'delete') {
+      osc.type = 'sine'; osc.frequency.setValueAtTime(400, ctx.currentTime)
       osc.frequency.setValueAtTime(300, ctx.currentTime + 0.1)
-      gain.gain.setValueAtTime(0.1, ctx.currentTime)
+      gain.gain.setValueAtTime(0.08, ctx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
       osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2)
-    } catch {}
-  },
-  click: () => {
-    try {
-      const ctx = new AudioContext()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain); gain.connect(ctx.destination)
+    } else if (type === 'click') {
       osc.frequency.setValueAtTime(800, ctx.currentTime)
-      gain.gain.setValueAtTime(0.05, ctx.currentTime)
+      gain.gain.setValueAtTime(0.04, ctx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
       osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.05)
-    } catch {}
-  },
+    } else if (type === 'achieve') {
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const o = ctx.createOscillator()
+        const g = ctx.createGain()
+        o.connect(g); g.connect(ctx.destination)
+        o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15)
+        g.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.15)
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3)
+        o.start(ctx.currentTime + i * 0.15); o.stop(ctx.currentTime + i * 0.15 + 0.3)
+      })
+    }
+  } catch {}
 }
 
-// UTILIDADES
+// ===== UTILIDADES =====
 export function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n)
 }
@@ -104,48 +107,61 @@ export function formatDate(d: string | Date): string {
 }
 
 export function formatDateFull(d: string | Date): string {
-  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d))
+  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d))
 }
 
-export function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ')
-}
+export function cn(...c: (string | boolean | undefined | null)[]) { return c.filter(Boolean).join(' ') }
 
-// ANÁLISIS INTELIGENTE
-export function analyzeFinances(transactions: any[]): {
-  score: number; health: string; tips: typeof FINANCIAL_TIPS; savingsRate: number; topCategory: string; avgDaily: number;
-} {
-  const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-  const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-  const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0
+// ===== ANÁLISIS FINANCIERO INTELIGENTE =====
+export function analyzeFinances(txs: any[]) {
+  const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0
   
-  // Score calculation
   let score = 50
   if (savingsRate > 30) score += 25
   else if (savingsRate > 20) score += 15
   else if (savingsRate > 10) score += 5
-  if (expenses < income * 0.7) score += 15
-  else if (expenses < income * 0.9) score += 5
-  if (transactions.length > 10) score += 5
+  if (expense < income * 0.7) score += 15
+  else if (expense < income * 0.9) score += 5
+  if (txs.length > 10) score += 5
+  if (txs.length > 50) score += 5
   score = Math.min(Math.max(score, 0), 100)
 
-  // Top category
   const catMap: Record<string, number> = {}
-  transactions.filter(t => t.type === 'expense').forEach(t => {
-    const cat = getCategory(t.category_id || '')
-    catMap[cat.name] = (catMap[cat.name] || 0) + t.amount
+  txs.filter(t => t.type === 'expense').forEach(t => {
+    const c = getCat(t.category_id || '')
+    catMap[c.name] = (catMap[c.name] || 0) + t.amount
   })
   const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+  const days = txs.length > 0 ? Math.max(1, Math.ceil((Date.now() - new Date(txs[txs.length - 1].date).getTime()) / 86400000)) : 1
+  const avgDaily = expense / days
 
-  // Avg daily
-  const days = transactions.length > 0 ? Math.max(1, Math.ceil((Date.now() - new Date(transactions[transactions.length - 1].date).getTime()) / 86400000)) : 1
-  const avgDaily = expenses / days
+  const healthLabel = score >= 80 ? '🟢 Excelente' : score >= 60 ? '🟡 Buena' : score >= 40 ? '🟠 Regular' : '🔴 Atención'
+  
+  const relevantTips = TIPS.sort(() => 0.5 - Math.random()).slice(0, 3)
 
-  // Health
-  const health = score >= 80 ? '🟢 Excelente' : score >= 60 ? '🟡 Buena' : score >= 40 ? '🟠 Regular' : '🔴 Necesita atención'
+  return { score, healthLabel, relevantTips, savingsRate, topCat, avgDaily, income, expense, balance: income - expense }
+}
 
-  // Tips (pick 3 relevant)
-  const tips = FINANCIAL_TIPS.sort(() => 0.5 - Math.random()).slice(0, 3)
+// ===== LOGROS =====
+export const ACHIEVEMENTS = [
+  { id: 'first_tx', icon: '🎉', title: 'Primer paso', desc: 'Registra tu primer movimiento', check: (txs: any[]) => txs.length >= 1 },
+  { id: 'ten_tx', icon: '🔟', title: 'Constante', desc: 'Registra 10 movimientos', check: (txs: any[]) => txs.length >= 10 },
+  { id: 'fifty_tx', icon: '📊', title: 'Organizado', desc: 'Registra 50 movimientos', check: (txs: any[]) => txs.length >= 50 },
+  { id: 'saver', icon: '💚', title: 'Ahorrador', desc: 'Ahorra más del 20% este mes', check: (txs: any[]) => {
+    const now = new Date(); const m = txs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() })
+    const inc = m.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const exp = m.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    return inc > 0 && (inc - exp) / inc > 0.2
+  }},
+  { id: 'no_spend', icon: '🏅', title: 'Día sin gastos', desc: 'Un día sin ningún gasto', check: (txs: any[]) => {
+    const today = new Date().toDateString()
+    return !txs.some(t => t.type === 'expense' && new Date(t.date).toDateString() === today)
+  }},
+  { id: 'diversified', icon: '🌈', title: 'Diversificado', desc: 'Usa 5+ categorías diferentes', check: (txs: any[]) => new Set(txs.map(t => t.category_id)).size >= 5 },
+]
 
-  return { score, health, tips, savingsRate, topCategory: topCat, avgDaily }
+export function checkAchievements(txs: any[]): typeof ACHIEVEMENTS {
+  return ACHIEVEMENTS.filter(a => a.check(txs))
 }

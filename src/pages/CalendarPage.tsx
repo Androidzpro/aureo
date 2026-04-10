@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { supabase, getCategory, formatCurrency, cn } from '@/lib/data'
+import { supabase, getCat, formatCurrency, cn } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
@@ -85,7 +85,7 @@ export default function CalendarPage() {
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {dayTxs.map(tx => {
-                  const cat = getCategory(tx.category_id)
+                  const cat = getCat(tx.category_id)
                   return (
                     <div key={tx.id} className="flex items-center gap-3 p-3.5 hover:bg-gray-50/50">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: cat.color + '15' }}>{cat.icon}</div>

@@ -19,7 +19,8 @@
       "Bash(vercel *)",
       "Bash(curl *)",
       "Bash(timeout *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(powershell *)"
     ]
   },
   "$version": 3

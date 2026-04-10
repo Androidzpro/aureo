@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { supabase, getCategory, formatCurrency, CATEGORIES, analyzeFinances } from '@/lib/data'
+import { supabase, getCat, formatCurrency, CATEGORIES, analyzeFinances } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, CartesianGrid } from 'recharts'
 import { Download, Lightbulb } from 'lucide-react'
@@ -37,13 +37,13 @@ export default function ReportsPage() {
 
   const catData = useMemo(() => {
     const map: Record<string, number> = {}
-    txs.filter(t => t.type === 'expense').forEach(t => { const c = getCategory(t.category_id); map[c.name] = (map[c.name] || 0) + t.amount })
+    txs.filter(t => t.type === 'expense').forEach(t => { const c = getCat(t.category_id); map[c.name] = (map[c.name] || 0) + t.amount })
     const colors = ['#EF4444','#F59E0B','#8B5CF6','#EC4899','#10B981','#3B82F6','#6366F1','#64748B','#A855F7','#F97316']
     return Object.entries(map).sort((a,b) => b[1] - a[1]).slice(0, 8).map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }))
   }, [txs])
 
   const exportCSV = () => {
-    const rows = txs.map(t => [new Date(t.date).toLocaleDateString('es-MX'), t.description, t.type === 'income' ? 'Ingreso' : 'Gasto', getCategory(t.category_id).name, t.amount].join(','))
+    const rows = txs.map(t => [new Date(t.date).toLocaleDateString('es-MX'), t.description, t.type === 'income' ? 'Ingreso' : 'Gasto', getCat(t.category_id).name, t.amount].join(','))
     const blob = new Blob(['\ufeffFecha,Descripción,Tipo,Categoría,Monto\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `flowfin_${new Date().toISOString().split('T')[0]}.csv`; a.click()
   }
