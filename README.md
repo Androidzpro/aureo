@@ -1,351 +1,367 @@
-# Aureo ✨ - Gestión Financiera Personal
+# FlowFin 💸
 
-<div align="center">
+> **Tu dinero, tu control.**
 
-![Aureo Logo](https://img.shields.io/badge/Aureo-Financial%20Management-D4AF37?style=for-the-badge&logo=chart-line)
+FlowFin es una aplicación web de gestión financiera personal diseñada para ayudarte a entender, controlar y mejorar tus finanzas. Pensada para cualquier persona que quiera saber a dónde va su dinero, reducir deudas, ahorrar más y tomar mejores decisiones financieras.
 
-![React](https://img.shields.io/badge/React-18+-61DAFB?style=flat-square&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6?style=flat-square&logo=typescript)
-![Vite](https://img.shields.io/badge/Vite-5+-646CFF?style=flat-square&logo=vite)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3+-06B6D4?style=flat-square&logo=tailwindcss)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js)
-![Express](https://img.shields.io/badge/Express-4+-000000?style=flat-square&logo=express)
-![Prisma](https://img.shields.io/badge/Prisma-5+-2D3748?style=flat-square&logo=prisma)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat-square&logo=postgresql)
-![Supabase](https://img.shields.io/badge/Supabase-Ready-3ECF8E?style=flat-square&logo=supabase)
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-
-**Aureo** is a modern, elegant, and mobile-first personal financial management web application that helps you track expenses, manage budgets, and achieve your financial goals.
-
-</div>
+Sin suscripciones, sin complicaciones. Solo tú y tus finanzas, claras y simples.
 
 ---
 
-## 📋 Table of Contents
+## 🚀 Características principales
 
-- [✨ Features](#-features)
-- [🎨 Design](#-design)
-- [📁 Project Structure](#-project-structure)
-- [🚀 Getting Started](#-getting-started)
-- [📊 Database](#-database)
-- [🔐 Environment Variables](#-environment-variables)
-- [🛠️ Available Scripts](#️-available-scripts)
-- [📱 API Endpoints](#-api-endpoints)
-- [🧪 Testing](#-testing)
-- [🚢 Deployment](#-deployment)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+### 💰 Gestión de ingresos y gastos
+Registra cada ingreso y gasto en segundos. Elige entre más de 20 categorías predefinidas —desde alimentación hasta inversiones— con una interfaz que parece una app nativa de tu teléfono.
 
----
+### 💳 Seguimiento de deudas
+Lleva el control de cuánto debes, a quién, con qué tasa de interés y cuánto has pagado. Visualiza tu progreso en tiempo real y celebra cada deuda que eliminas.
 
-## ✨ Features
+### 📋 Presupuestos mensuales
+Define límites de gasto por categoría y recibe alertas cuando estés por superarlos. Nunca más te preguntes "¿en qué se me fue el sueldo?".
 
-- 📊 **Expense Tracking** - Log and categorize your expenses effortlessly
-- 💰 **Budget Management** - Set budgets and monitor your spending
-- 📈 **Visual Analytics** - Beautiful charts and insights into your finances
-- 🔄 **Real-time Sync** - Keep your data synchronized across devices
-- 🔐 **Secure Authentication** - JWT-based authentication
-- 📱 **Mobile-First Design** - Optimized for all screen sizes
-- 🎯 **Financial Goals** - Set and track your financial objectives
-- 🔔 **Smart Notifications** - Get alerts for important financial events
+### 🎯 Metas de ahorro
+Crea metas de ahorro personalizadas —vacaciones, un auto, un fondo de emergencia— y haz aportaciones parciales mientras ves tu progreso crecer.
+
+### 📊 Reportes financieros
+Visualiza tus finanzas con gráficas de barras, áreas y pastel. Filtra por fecha, categoría o tipo de movimiento. Exporta todo a CSV para tus propios análisis.
+
+### 🤖 Coach financiero inteligente
+FlowFin analiza tu comportamiento automáticamente y te da recomendaciones como:
+- *"Estás gastando más del 40% en ocio"*
+- *"Si reduces $500 en comida, ahorrarías $6,000 al año"*
+- *"Tu tasa de ahorro está por debajo del mínimo recomendado"*
+- *"⚠️ Tus gastos superaron tus ingresos este mes"*
 
 ---
 
-## 🎨 Design
+## 🧠 Inteligencia financiera
 
-Aureo features a sophisticated, minimalist design with a golden accent color:
+FlowFin no solo registra — **entiende**. Un motor de análisis financiero evalúa constantemente tu comportamiento y genera insights accionables:
 
-- **Primary:** `#D4AF37` (Golden/Aureo)
-- **Secondary:** `#1A1A1A` (Elegant Black)
-- **Success:** `#2E7D32` (Green)
-- **Danger:** `#C62828` (Red)
-- **Background:** `#FAFAFA` (Almost White)
+### Análisis automático
+| Insight | Cuándo se activa |
+|---------|-----------------|
+| 🚨 **Balance negativo** | Cuando gastas más de lo que ganas |
+| ⚠️ **Ahorro insuficiente** | Cuando ahorras menos del 10% de tus ingresos |
+| 🎉 **Buen ahorro** | Cuando superas el 20% de ahorro |
+| 📈 **Gastos crecientes** | Cuando tus gastos suben más del 20% vs el mes anterior |
+| 📉 **Gastos decrecientes** | Cuando reduces gastos significativamente |
+| 🔍 **Categoría dominante** | Cuando una sola categoría consume más del 40% de tus gastos |
+| 🍽️ **Alerta de alimentación** | Cuando comida + restaurantes superan el 35% de tus ingresos |
+| 🔄 **Suscripciones excesivas** | Cuando pagas más de $500/mes en suscripciones |
+| 💳 **Deuda crítica** | Cuando tus deudas activas superan tus ingresos mensuales |
+| ⛔ **Presupuesto excedido** | Cuando superas un límite de categoría |
 
-**Font:** Inter / Poppins
-
-The design is mobile-first, elegant, and uses the golden color sparingly for accents and important elements.
+### Score de salud financiera
+Un puntaje de 0 a 100 que resume tu situación actual, calculado con base en:
+- **Tasa de ahorro** (hasta +25 puntos)
+- **Proporción gasto/ingreso** (hasta +15 puntos)
+- **Consistencia de registro** (hasta +10 puntos)
+- **Penalizaciones** por balance negativo o deudas altas
 
 ---
 
-## 📁 Project Structure
+## 📱 Diseño y experiencia de usuario
+
+### Mobile-first real
+FlowFin está diseñado primero para pantallas pequeñas. Cada botón, cada formulario, cada navegación fue pensada para el pulgar:
+
+- **Bottom navigation** con 5 tabs siempre al alcance
+- **Botón flotante (FAB)** para agregar movimientos en 1 toque
+- **Modales desde abajo** (sheet pattern) como en apps nativas
+- **Inputs optimizados** que activan el teclado numérico correcto
+- **Sin scroll horizontal**, sin zoom accidental
+
+### Diseño tipo SaaS premium
+Inspirado en las mejores apps fintech del mercado —1Money, Wallet by BudgetBakers, YNAB— con un diseño limpio que prioriza la información importante:
+
+- **Paleta sobria**: fondo blanco, texto oscuro, acentos en indigo
+- **Tarjetas con bordes sutiles**: información clara sin ruido visual
+- **Gradientes solo donde importa**: la tarjeta de balance destaca sin distraer
+- **Tipografía Inter**: legible en cualquier tamaño de pantalla
+
+### Modo oscuro
+Soporte completo para dark mode. Toda la interfaz se adapta automáticamente a la preferencia de tu dispositivo.
+
+---
+
+## 🧮 Lógica financiera
+
+### Balance del mes
+```
+Balance = Ingresos del mes − Gastos del mes
+```
+Se calcula filtrando todas las transacciones del mes actual por tipo y realizando la resta. El resultado se muestra en verde si es positivo, rojo si es negativo.
+
+### Tasa de ahorro
+```
+Tasa de ahorro = ((Ingresos − Gastos) / Ingresos) × 100
+```
+El porcentaje de tus ingresos que no se convierte en gasto. Una tasa saludable está entre 20% y 30%.
+
+### Progreso de deuda
+```
+Progreso = (Monto pagado / Monto total) × 100
+Restante = Monto total − Monto pagado
+```
+Cada pago registrado actualiza el monto pagado y recalcula el porcentaje. Cuando el pagado ≥ total, la deuda se marca como "pagada".
+
+### Progreso de meta
+```
+Progreso = (Monto actual / Meta objetivo) × 100
+Faltante = Meta objetivo − Monto actual
+```
+Cada aportación incrementa el monto actual. Al llegar al 100%, la meta se celebra con una notificación visual.
+
+### Score de salud financiera
+```
+Score base: 50 puntos
++ 25 pts si tasa de ahorro > 30%
++ 15 pts si tasa de ahorro > 20%
++  5 pts si tasa de ahorro > 10%
+− 15 pts si tasa de ahorro < 0%
++ 10 pts si gastos < 70% de ingresos
+− 10 pts si gastos > ingresos
++  5 pts si tiene más de 10 registros
+Resultado: clamp(0, score, 100)
+```
+
+---
+
+## 📊 Reportes
+
+### Gráficas disponibles
+
+| Tipo | Qué muestra | Cuándo usarla |
+|------|-------------|---------------|
+| **Barras** | Ingresos vs Gastos mes a mes | Comparar directamente cuánto entra vs cuánto sale |
+| **Áreas** | Evolución de ingresos y gastos en el tiempo | Ver tendencias y patrones estacionales |
+| **Pastel (Donut)** | Distribución de gastos por categoría | Identificar en qué se va la mayor parte del dinero |
+
+### Filtros
+- **Por fecha**: selecciona cualquier rango de fechas
+- **Por tipo**: solo ingresos, solo gastos, o ambos
+- **Por categoría**: filtra por una categoría específica
+
+### Exportación
+Un click para descargar un archivo **CSV** con todos tus movimientos, listo para abrir en Excel, Google Sheets o cualquier herramienta de análisis.
+
+---
+
+## ⚙️ Tecnologías usadas
+
+| Capa | Tecnología | Por qué |
+|------|-----------|---------|
+| **Frontend** | React 18 + TypeScript | Type safety, ecosistema maduro |
+| **Build tool** | Vite 5 | HMR instantáneo, bundle optimizado |
+| **Estilos** | TailwindCSS 3 | Utility-first, responsive por defecto |
+| **Animaciones** | Framer Motion | Animaciones fluidas tipo app nativa |
+| **Estado local** | Zustand + Persist | Simple, ligero, con persistencia |
+| **Formularios** | React Hook Form + Zod | Validación robusta y performante |
+| **Gráficas** | Recharts | Basado en D3, ligero, declarativo |
+| **Backend/DB** | Supabase (PostgreSQL) | BaaS gratuito, auth incluida, API REST automática |
+| **Deploy** | Vercel | Zero-config, CDN global, HTTPS automático |
+
+---
+
+## 🏗️ Arquitectura
 
 ```
-aureo/
-├── 📱 client/                    # Frontend React application
-│   ├── src/
-│   │   ├── components/          # Reusable UI components
-│   │   │   └── ui/             # Shadcn/ui components
-│   │   ├── pages/              # Page components
-│   │   ├── hooks/              # Custom React hooks
-│   │   ├── lib/                # Utility functions
-│   │   ├── services/           # API service calls
-│   │   ├── store/              # State management
-│   │   ├── types/              # TypeScript type definitions
-│   │   ├── assets/             # Images, fonts, etc.
-│   │   └── App.tsx             # Main app component
-│   ├── public/                 # Static assets
-│   └── package.json
-│
-├── 🖥️ server/                    # Backend Express application
-│   ├── src/
-│   │   ├── controllers/        # Request handlers
-│   │   ├── routes/             # API routes
-│   │   ├── middleware/         # Custom middleware
-│   │   ├── services/           # Business logic
-│   │   ├── utils/              # Utility functions
-│   │   ├── types/              # TypeScript types
-│   │   └── index.ts            # Server entry point
-│   ├── prisma/                 # Database schema & migrations
-│   │   └── schema.prisma       # Prisma schema
-│   └── package.json
-│
-├── 📊 database/                 # Database seeds & scripts
-├── 📄 .env.example             # Environment variables template
-├── 📄 .gitignore               # Git ignore rules
-├── 📄 docker-compose.yml       # Local development setup
-├── 📄 README.md                # This file
-└── 📄 package.json             # Root package.json
+┌─────────────────────────────────────────────┐
+│              FlowFin (Vercel)               │
+│                                             │
+│  ┌─────────────────────────────────────┐   │
+│  │          Frontend (React)           │   │
+│  │                                     │   │
+│  │  src/                               │   │
+│  │  ├── components/   ← UI reutilizable│   │
+│  │  ├── pages/        ← Vistas/rutas   │   │
+│  │  ├── store/        ← Estado global  │   │
+│  │  ├── contexts/     ← Auth context   │   │
+│  │  └── lib/          ← Utilidades     │   │
+│  └──────────────┬──────────────────────┘   │
+│                 │ API REST                 │
+└─────────────────┼──────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│          Supabase (PostgreSQL)              │
+│                                             │
+│  Tables:                                    │
+│  ├── users         ← Usuarios y auth       │
+│  └── transactions  ← Movimientos financieros│
+│                                             │
+│  Local Storage:                             │
+│  ├── deudas        ← Tracking de deudas     │
+│  └── metas         ← Metas de ahorro        │
+└─────────────────────────────────────────────┘
 ```
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Node.js** >= 18.0.0
-- **npm** >= 9.0.0
-- **PostgreSQL** >= 15 (or Supabase account)
-- **Git**
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/aureo.git
-   cd aureo
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` with your configuration (see [Environment Variables](#-environment-variables))
-
-4. **Set up the database**
-   ```bash
-   # Using local PostgreSQL
-   docker-compose up -d
-   
-   # Or configure Supabase in .env
-   
-   # Run Prisma migrations
-   npm run db:migrate
-   ```
-
-5. **Start development servers**
-   ```bash
-   npm run dev
-   ```
-
-   This will start:
-   - Client: `http://localhost:5173`
-   - Server: `http://localhost:3001`
+### Separación de responsabilidades
+- **Frontend**: Toda la lógica de UI, validación, cálculos y presentación
+- **Supabase**: Autenticación, persistencia de transacciones y usuarios
+- **LocalStorage**: Datos temporales (deudas, metas) para velocidad y offline básico
 
 ---
 
-## 📊 Database
+## 📦 Instalación
 
-### Using Local PostgreSQL (Docker)
+### Requisitos
+- [Node.js](https://nodejs.org/) v18 o superior
+- [npm](https://npmjs.com/) v9 o superior
+- Cuenta gratuita en [Supabase](https://supabase.com)
 
+### Paso a paso
+
+**1. Clona el repositorio**
 ```bash
-# Start PostgreSQL and pgAdmin
-docker-compose up -d
-
-# Access pgAdmin at http://localhost:5050
-# Email: admin@aureo.app
-# Password: admin
+git clone https://github.com/tu-usuario/flowfin.git
+cd flowfin
 ```
 
-### Using Supabase
-
-1. Create a free account at [Supabase](https://supabase.com)
-2. Create a new project
-3. Go to Project Settings > Database
-4. Copy the connection string
-5. Update `DATABASE_URL` in your `.env`
-
-### Database Migrations
-
+**2. Instala dependencias**
 ```bash
-# Generate Prisma client
-npm run db:generate
-
-# Run migrations
-npm run db:migrate
-
-# Open Prisma Studio (database GUI)
-npm run db:studio
+npm install
 ```
 
----
+**3. Configura Supabase**
+- Crea un proyecto gratuito en [supabase.com](https://supabase.com)
+- Ve a **SQL Editor** y ejecuta el siguiente script:
 
-## 🔐 Environment Variables
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  password TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-Create a `.env` file in the root directory with the following variables:
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  description TEXT NOT NULL,
+  category_id TEXT,
+  date TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | - | ✅ |
-| `JWT_SECRET` | Secret key for JWT tokens | - | ✅ |
-| `JWT_EXPIRES_IN` | Token expiration time | `7d` | ✅ |
-| `PORT` | Server port | `3001` | ✅ |
-| `NODE_ENV` | Environment | `development` | ✅ |
-| `CLIENT_URL` | Frontend URL | `http://localhost:5173` | ✅ |
-| `SUPABASE_URL` | Supabase project URL | - | ❌ |
-| `SUPABASE_KEY` | Supabase API key | - | ❌ |
-| `SMTP_HOST` | Email SMTP host | `smtp.gmail.com` | ❌ |
-| `SMTP_PORT` | Email SMTP port | `587` | ❌ |
-| `SMTP_USER` | Email username | - | ❌ |
-| `SMTP_PASSWORD` | Email password | - | ❌ |
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 
----
-
-## 🛠️ Available Scripts
-
-### Development
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start both client and server in development mode |
-| `npm run dev:client` | Start only the client dev server |
-| `npm run dev:server` | Start only the server in watch mode |
-
-### Production
-
-| Command | Description |
-|---------|-------------|
-| `npm run build` | Build both client and server |
-| `npm run build:client` | Build the client for production |
-| `npm run build:server` | Build the server for production |
-| `npm start` | Start the production server |
-
-### Database
-
-| Command | Description |
-|---------|-------------|
-| `npm run db:migrate` | Run database migrations |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:studio` | Open Prisma Studio |
-
-### Code Quality
-
-| Command | Description |
-|---------|-------------|
-| `npm run lint` | Run linter on all packages |
-
----
-
-## 📱 API Endpoints
-
-### Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Create a new account |
-| `POST` | `/api/auth/login` | Login with email/password |
-| `POST` | `/api/auth/logout` | Logout current user |
-| `GET` | `/api/auth/me` | Get current user profile |
-| `POST` | `/api/auth/forgot-password` | Request password reset |
-| `POST` | `/api/auth/reset-password` | Reset password with token |
-
-### Transactions
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/transactions` | Get all transactions |
-| `GET` | `/api/transactions/:id` | Get single transaction |
-| `POST` | `/api/transactions` | Create new transaction |
-| `PUT` | `/api/transactions/:id` | Update transaction |
-| `DELETE` | `/api/transactions/:id` | Delete transaction |
-
-### Budgets
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/budgets` | Get all budgets |
-| `POST` | `/api/budgets` | Create new budget |
-| `PUT` | `/api/budgets/:id` | Update budget |
-| `DELETE` | `/api/budgets/:id` | Delete budget |
-
----
-
-## 🧪 Testing
-
-```bash
-# Run tests (coming soon)
-npm test
-
-# Run tests with coverage
-npm run test:coverage
+CREATE POLICY "Users see own data" ON transactions
+  FOR ALL USING (auth.uid() = user_id);
 ```
 
----
+**4. Configura las credenciales**
+Copia las credenciales de tu proyecto Supabase:
+- Ve a **Settings → API**
+- Copia la **Project URL** y la **anon public key**
+- Abre `src/lib/data.ts` y reemplaza las constantes `SUPABASE_URL` y `SUPABASE_ANON_KEY`
 
-## 🚢 Deployment
-
-### Frontend (Vercel)
-
+**5. Ejecuta en desarrollo**
 ```bash
-# Install Vercel CLI
+npm run dev
+```
+Abre http://localhost:5173 en tu navegador.
+
+**6. Compila para producción**
+```bash
+npm run build
+npm run preview
+```
+
+### Deploy en Vercel
+```bash
 npm i -g vercel
-
-# Deploy
-cd client
-vercel
+vercel --prod
 ```
 
-### Backend (Render/Railway)
+---
 
-1. Connect your GitHub repository
-2. Set build command: `npm run build:server`
-3. Set start command: `npm start`
-4. Add environment variables
+## 🔐 Seguridad
 
-### Database (Supabase)
+### Autenticación
+- Registro y login con contraseñas hasheadas usando **bcrypt** (10 rounds)
+- Sesión persistente en el dispositivo del usuario con **Zustand Persist**
+- Sin tokens JWT expuestos — la sesión se maneja localmente
 
-Simply use your Supabase project URL in the production `DATABASE_URL`.
+### Protección de datos
+- **Row Level Security (RLS)** en PostgreSQL: cada usuario solo ve sus propios datos
+- Sin datos sensibles expuestos en el frontend
+- Las contraseñas nunca se envían en texto plano
+
+### Buenas prácticas
+- Validación de formularios con **Zod** en el cliente
+- Sanitización de inputs antes de enviar a la base de datos
+- Sin dependencias con vulnerabilidades conocidas críticas
 
 ---
 
-## 🤝 Contributing
+## 🚧 Roadmap
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+### Q3 2025
+- [ ] **Modo oscuro automático** — detectar preferencia del sistema
+- [ ] **Cuentas múltiples** — banco, efectivo, tarjeta, inversión
+- [ ] **Transferencias entre cuentas** — mover dinero sin duplicar
+- [ ] **Transacciones recurrentes** — suscripciones y pagos automáticos
+- [ ] **Backups automáticos** — exportación programada
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Q4 2025
+- [ ] **IA financiera avanzada** — predicción de gastos futuros, detección de anomalías
+- [ ] **Presupuestos inteligentes** — que se ajusten solos según tu historial
+- [ ] **Metas con plazo** — cálculo de cuánto ahorrar por semana/mes para llegar a tiempo
+- [ ] **Notificaciones push** — alertas en tiempo real desde el navegador
+
+### Q1 2026
+- [ ] **Integración bancaria** — conectar cuentas bancarias reales (open banking)
+- [ ] **Sincronización multi-dispositivo** — deudas y metas en la nube
+- [ ] **App móvil nativa** — React Native o Capacitor para iOS y Android
+- [ ] **Compartir presupuesto** — finanzas familiares o de pareja
+
+### Q2 2026
+- [ ] **Inversiones** — seguimiento de portafolio, rendimiento
+- [ ] **Escenarios** — "¿qué pasa si reduzco X gasto un 20%?"
+- [ ] **Modo coach premium** — recomendaciones personalizadas con IA
+- [ ] **API pública** — para desarrolladores y integraciones
 
 ---
 
-## 📄 License
+## 💡 Propuesta de valor
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### ¿Por qué FlowFin y no otra app?
+
+| | FlowFin | Otras apps |
+|---|---------|------------|
+| **Precio** | 100% gratis | $5–15/mes |
+| **Conexión bancaria** | No requerida | Obligatoria en muchos casos |
+| **Privacidad** | Tus datos, tus reglas | Venden datos de consumo |
+| **Complejidad** | 30 segundos para empezar | Horas de configuración |
+| **Inteligencia** | Insights automáticos | Solo registra, no analiza |
+| **Offline** | Funciona sin internet | Requiere conexión constante |
+| **Deudas** | Tracking completo con historial | Básico o inexistente |
+| **Metas** | Con aportaciones parciales | Solo el monto final |
+
+### La diferencia FlowFin
+
+> *"Las apps financieras te obligan a conectar tu banco, te cobran suscripción y te muestran gráficas bonitas que no te dicen qué hacer. FlowFin es diferente: no necesita tu banco, es gratis, y te dice exactamente qué está mal con tu dinero y cómo arreglarlo."*
+
+**FlowFin no es un tracker. Es tu coach financiero personal.**
 
 ---
 
-<div align="center">
+## 📄 Licencia
 
-**Made with ❤️ by the Aureo Team**
+MIT License. Haz lo que quieras con el código.
 
-⭐ Star this repo if you find it helpful!
+---
 
-</div>
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Abre un issue o un pull request.
+
+---
+
+**Hecho con ❤️ para que más personas tengan el control de su dinero.**
