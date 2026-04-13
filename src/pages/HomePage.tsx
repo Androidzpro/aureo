@@ -78,6 +78,30 @@ export default function HomePage() {
         </div>
       </motion.div>
 
+      {/* Personalized Goal Card */}
+      {profile?.goal_type && txs.length === 0 && (
+        <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-lg flex-shrink-0">
+              {profile.goal_type === 'save' ? '🎯' : profile.goal_type === 'debt_control' ? '💳' : '📊'}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-900 dark:text-white">
+                {profile.goal_type === 'save' ? 'Objetivo: Fondo de emergencia' : profile.goal_type === 'debt_control' ? 'Objetivo: Eliminar deudas' : 'Objetivo: Control de gastos'}
+              </p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                {profile.goal_type === 'save'
+                  ? `Tu ingreso es ${formatCurrency(profile.monthly_income || 0, profile.currency)}/mes. Te recomendamos ahorrar al menos ${formatCurrency((profile.monthly_income || 0) * 0.2, profile.currency)} mensuales.`
+                  : profile.goal_type === 'debt_control'
+                  ? 'Registra tus deudas en la sección Deudas y te daremos un plan de pago estratégico.'
+                  : 'Registra cada gasto para saber exactamente a dónde va tu dinero.'}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Score */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between">
