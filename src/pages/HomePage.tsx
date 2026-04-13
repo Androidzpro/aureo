@@ -24,15 +24,17 @@ export default function HomePage() {
   const loadAll = async () => {
     if (!profile?.id) return
     try {
-      const [txRes, debtRes, budgetRes] = await Promise.all([
+      const [txRes, debtRes, budgetRes] = await Promise.allSettled([
         supabase.from('transactions').select('*').eq('user_id', profile.id).order('date', { ascending: false }).limit(100),
         supabase.from('debts').select('*').eq('user_id', profile.id).order('created_at', { ascending: false }),
         supabase.from('budgets').select('*').eq('user_id', profile.id),
       ])
-      if (txRes.data) setTxs(txRes.data)
-      if (debtRes.data) setDebts(debtRes.data)
-      if (budgetRes.data) setBudgets(budgetRes.data)
-    } catch (e) { console.error(e) }
+      if (txRes.status === 'fulfilled' && txRes.value.data) setTxs(txRes.value.data)
+      if (debtRes.status === 'fulfilled' && debtRes.value.data) setDebts(debtRes.value.data)
+      if (budgetRes.status === 'fulfilled' && budgetRes.value.data) setBudgets(budgetRes.value.data)
+    } catch (e) {
+      console.error('Load error:', e)
+    }
     finally { setLoading(false) }
   }
 
