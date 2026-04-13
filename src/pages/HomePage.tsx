@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, ArrowDownRight, TrendingUp, X, ChevronRight, AlertTriangle, CheckCircle, Info } from 'lucide-react'
+import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
-import { formatCurrency, getCat, calcScore, getInsights, type Insight, playSound, cn } from '@/lib/data'
+import { formatCurrency, getCat, playSound, cn } from '@/lib/data'
+import { calcFlowScore } from '@/lib/flowScore'
 import { ConfirmDialog, EmptyState } from '@/components/UI'
+import { FlowScoreCard } from '@/components/FlowScoreCard'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
 export default function HomePage() {
@@ -36,23 +38,13 @@ export default function HomePage() {
   const mTxs = useMemo(() => txs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }), [txs])
   const mIncome = mTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const mExpense = mTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-  const score = calcScore(txs, debts, profile?.monthly_income || undefined)
-  const insights = getInsights(txs, debts, budgets, profile?.currency || 'MXN')
+  const flowScore = calcFlowScore(txs, debts, profile?.monthly_income, profile?.goal_type)
 
   const catData = useMemo(() => {
     const map: Record<string, number> = {}
     mTxs.filter(t => t.type === 'expense').forEach(t => { const c = getCat(t.category_id); map[c.id] = (map[c.id] || 0) + t.amount })
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([id, value]) => ({ ...getCat(id), value }))
   }, [mTxs])
-
-  const insightIcon = (type: Insight['type']) => {
-    switch (type) {
-      case 'alert': return <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-      case 'warning': return <AlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
-      case 'success': return <CheckCircle size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-      default: return <Info size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
-    }
-  }
 
   if (!profile?.onboarded) return null
 
@@ -102,35 +94,22 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* Score */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm',
-              score >= 70 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : score >= 40 ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-gradient-to-br from-red-500 to-rose-600')}>
-              {score}%
-            </div>
-            <div><p className="text-xs font-medium text-gray-900 dark:text-white">Salud financiera</p><p className="text-[10px] text-gray-400">{score >= 70 ? 'Excelente' : score >= 40 ? 'Puede mejorar' : 'Necesita atención'}</p></div>
-          </div>
-          <Link to="/reports" className="text-gray-400"><ChevronRight size={16} /></Link>
-        </div>
-        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mt-3"><div className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all" style={{ width: `${score}%` }} /></div>
-      </div>
+      {/* FlowScore Card */}
+      <FlowScoreCard score={flowScore} />
 
-      {/* Coach Insights */}
-      {insights.length > 0 && (
+      {/* Coach Insights from FlowScore */}
+      {flowScore.recommendations.length > 0 && txs.length > 0 && (
         <div className="space-y-2">
-          {insights.slice(0, 3).map((insight, i) => (
+          {flowScore.recommendations.slice(0, 2).map((rec, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}
               className={cn('rounded-xl p-3 border flex items-start gap-2.5',
-                insight.type === 'alert' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20' :
-                insight.type === 'warning' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20' :
-                insight.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20' :
-                'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20')}>
-              <div>{insightIcon(insight.type)}</div>
+                rec.priority === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20' :
+                rec.priority === 'medium' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20' :
+                'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20')}>
+              <span className="text-base mt-0.5">{rec.icon}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">{insight.title}</p>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{insight.message}</p>
+                <p className="text-xs font-semibold text-gray-900 dark:text-white">{rec.title}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{rec.message}</p>
               </div>
             </motion.div>
           ))}
