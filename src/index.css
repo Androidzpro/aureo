@@ -4,16 +4,11 @@
 
 @layer base {
   :root {
-    --flow-brand-50: #EEF2FF;
-    --flow-brand-100: #E0E7FF;
-    --flow-brand-500: #6366F1;
-    --flow-brand-600: #4F46E5;
-
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-    --primary: 243 75% 59%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -25,7 +20,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 59%;
+    --ring: 160 84% 39%;
     --radius: 0.75rem;
   }
 
@@ -34,7 +29,7 @@
     --foreground: 210 40% 98%;
     --card: 222.2 84% 6.9%;
     --card-foreground: 210 40% 98%;
-    --primary: 243 75% 59%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -46,7 +41,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 243 75% 59%;
+    --ring: 160 84% 39%;
   }
 }
 
@@ -68,8 +63,8 @@
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold
-           bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25
-           hover:shadow-xl hover:shadow-indigo-500/30 hover:from-indigo-600 hover:to-violet-600
+           bg-emerald-600 text-white shadow-lg shadow-emerald-600/25
+           hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-600/30
            active:scale-[0.98] transition-all duration-150
            disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none;
   }

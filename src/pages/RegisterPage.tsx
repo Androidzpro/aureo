@@ -1,91 +1,230 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { supabase } from '@/lib/data'
 import { useAuth } from '@/contexts/AuthContext'
+import { FlowLogo } from '@/components/FlowLogo'
+import { Eye, EyeOff, Loader2, AlertCircle, Check, X, Mail } from 'lucide-react'
 
-const schema = z.object({
-  name: z.string().min(2, 'Mínimo 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+const registerSchema = z.object({
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  email: z.string().email('Ingresa un correo válido'),
+  password: z.string()
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Debe incluir una mayúscula')
+    .regex(/[0-9]/, 'Debe incluir un número'),
   confirmPassword: z.string(),
-}).refine(d => d.password === d.confirmPassword, { message: 'No coinciden', path: ['confirmPassword'] })
+}).refine(d => d.password === d.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+})
+
+type RegisterFormData = z.infer<typeof registerSchema>
+
+function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {met ? <Check size={12} className="text-emerald-500" /> : <X size={12} className="text-gray-300" />}
+      <span className={met ? 'text-emerald-600' : 'text-gray-400'}>{text}</span>
+    </div>
+  )
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const { register: reg } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [verificationSent, setVerificationSent] = useState(false)
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirmSent, setConfirmSent] = useState(false)
 
-  useEffect(() => {
-    if (searchParams.get('registered') === 'true') {
-      setVerificationSent(true)
-    }
-  }, [searchParams])
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+  })
 
-  const onSubmit = async (data: { name: string; email: string; password: string }) => {
+  const passwordValue = watch('password', '')
+
+  const requirements = [
+    { met: passwordValue.length >= 8, text: 'Mínimo 8 caracteres' },
+    { met: /[A-Z]/.test(passwordValue), text: 'Una letra mayúscula' },
+    { met: /[0-9]/.test(passwordValue), text: 'Un número' },
+  ]
+
+  const allMet = requirements.every(r => r.met)
+
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      setIsLoading(true); setError(''); setVerificationSent(false)
+      setIsLoading(true)
+      setError('')
       const result = await reg(data.name, data.email, data.password)
-      if (result === 'needsVerification') {
-        setVerificationSent(true)
-        return
-      }
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        setVerificationSent(true)
-        return
-      }
-      navigate('/onboarding')
-    }
-    catch (e: any) { 
-      if (e?.message?.includes('ya está registrado')) {
-        setError(e.message)
+      if (result && typeof result === 'object' && 'needsVerification' in result) {
+        setConfirmSent(true)
       } else {
-        setError(e?.message || 'Error al crear cuenta')
+        navigate('/')
       }
+    } catch (e: any) {
+      if (e?.message?.includes('already registered')) {
+        setError('Este correo ya está registrado')
+      } else {
+        setError('Error al crear la cuenta. Intenta de nuevo.')
+      }
+    } finally {
+      setIsLoading(false)
     }
-    finally { setIsLoading(false) }
+  }
+
+  if (confirmSent) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <FlowLogo size={32} className="justify-center" theme="light" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail size={28} className="text-emerald-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Revisa tu correo</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Enviamos un enlace de confirmación. Haz clic en él para activar tu cuenta.
+            </p>
+            <div className="space-y-3">
+              <button onClick={() => navigate('/login')} className="btn-primary w-full">
+                Ir al login
+              </button>
+              <button onClick={() => setConfirmSent(false)} className="btn-ghost w-full">
+                Volver al registro
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
+    <div className="min-h-screen flex">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl" />
+        </div>
+        <div className="relative z-10 max-w-md text-center">
+          <FlowLogo size={48} variant="full" theme="light" className="justify-center mb-8" />
+          <h1 className="text-4xl font-bold text-white mb-4">Empieza a controlar tu dinero</h1>
+          <p className="text-lg text-gray-300 leading-relaxed">
+            Crea tu cuenta gratis y descubre cómo FlowFin puede ayudarte a tomar mejores decisiones financieras.
+          </p>
+          <div className="mt-8 space-y-3 text-left max-w-xs mx-auto">
+            {['Registro en 30 segundos', 'Sin tarjeta de crédito', 'Tus datos están seguros'].map((text, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm text-gray-400">
+                <Check size={14} className="text-emerald-500" /> {text}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm relative z-10">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 mx-auto mb-3 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center"><span className="text-3xl">💰</span></div>
-          <h1 className="text-xl font-black text-white">Crear cuenta</h1>
-          <p className="text-white/70 text-sm mt-1">Empieza a controlar tus finanzas</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-2xl">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
-            <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Nombre</label><input placeholder="Tu nombre" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" {...register('name')} />{errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}</div>
-            <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Correo</label><input type="email" placeholder="tu@email.com" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" {...register('email')} />{errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}</div>
-            <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Contraseña</label><input type="password" placeholder="Mínimo 6 caracteres" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" {...register('password')} />{errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}</div>
-            <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Confirmar</label><input type="password" placeholder="Repite la contraseña" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" {...register('confirmPassword')} />{errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}</div>
-            <button type="submit" disabled={isLoading} className="w-full h-11 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-300/50 active:scale-[0.98] transition-all disabled:opacity-50">
-              {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Crear cuenta'}
-            </button>
-          </form>
-          {error && <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl text-xs text-red-600 text-center">{error}</div>}
-          {verificationSent && (
-            <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
-              <p className="text-xs text-emerald-600 text-center font-medium">Revisa tu correo</p>
-              <p className="text-xs text-emerald-500 text-center mt-1">Te enviamos un enlace de verificación. Haz clic en el enlace para activar tu cuenta.</p>
+
+      {/* Right side - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+          <div className="lg:hidden text-center mb-8">
+            <FlowLogo size={36} className="justify-center" theme="light" />
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900">Crear cuenta</h2>
+              <p className="text-sm text-gray-500 mt-1">Completa tus datos para registrarte</p>
             </div>
-          )}
-        </div>
-        <p className="text-center text-xs text-white/60 mt-5">¿Ya tienes cuenta? <Link to="/login" className="text-white font-semibold">Iniciar sesión</Link></p>
-      </motion.div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Nombre</label>
+                <input type="text" placeholder="Tu nombre" className="input" {...register('name')} />
+                {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Correo electrónico</label>
+                <input type="email" placeholder="tu@email.com" className="input" {...register('email')} />
+                {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mínimo 8 caracteres"
+                    className="input pr-12"
+                    {...register('password')}
+                    onChange={e => { setPassword(e.target.value); register('password').onChange(e) }}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {/* Password requirements */}
+                <div className="mt-2 space-y-1.5">
+                  {requirements.map((req, i) => (
+                    <PasswordRequirement key={i} met={req.met} text={req.text} />
+                  ))}
+                </div>
+                {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Confirmar contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    placeholder="Repite tu contraseña"
+                    className={cn('input pr-12', errors.confirmPassword && 'border-red-300 focus:border-red-500 focus:ring-red-500/20')}
+                    {...register('confirmPassword')}
+                  />
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {errors.confirmPassword && <p className="text-xs text-red-600 mt-1.5">{errors.confirmPassword.message}</p>}
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2.5 rounded-lg">
+                  <AlertCircle size={14} className="flex-shrink-0" /> {error}
+                </div>
+              )}
+
+              <button type="submit" disabled={isLoading || !allMet} className="btn-primary w-full">
+                {isLoading ? <><Loader2 size={16} className="animate-spin" /> Creando cuenta...</> : 'Crear cuenta'}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                ¿Ya tienes cuenta?{' '}
+                <Link to="/login" className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+                  Iniciar sesión
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Al registrarte, aceptas nuestros Términos de servicio y Política de privacidad
+          </p>
+        </motion.div>
+      </div>
     </div>
   )
+}
+
+function cn(...classes: (string | boolean | undefined | null)[]) {
+  return classes.filter(Boolean).join(' ')
 }

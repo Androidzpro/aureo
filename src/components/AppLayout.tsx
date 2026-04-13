@@ -51,7 +51,7 @@ export default function AppLayout() {
               <Link key={item.path} to={item.path} onClick={() => playSound('click')}
                 className={cn('flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
                   active
-                    ? 'bg-[var(--flow-brand-50)] dark:bg-indigo-950/30 text-[var(--flow-brand-600)] dark:text-indigo-400'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
                     : 'text-[var(--gray-600)] dark:text-[var(--gray-400)] hover:bg-[var(--gray-50)] dark:hover:bg-[var(--gray-800)] hover:text-[var(--gray-900)] dark:hover:text-[var(--gray-200)]')}>
                 <item.icon size={18} strokeWidth={active ? 2 : 1.5} />
                 {item.label}
@@ -80,7 +80,7 @@ export default function AppLayout() {
         {/* User */}
         <div className="px-3 py-3 border-t border-[var(--gray-100)] dark:border-[var(--gray-800)]">
           <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
               <span className="text-xs font-bold text-white">{profile?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
             </div>
             <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export default function AppLayout() {
                   return (
                     <Link key={item.path} to={item.path} onClick={() => { setMobileMenu(false); playSound('click') }}
                       className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                        active ? 'bg-[var(--flow-brand-50)] dark:bg-indigo-950/30 text-[var(--flow-brand-600)] dark:text-indigo-400' : 'text-[var(--gray-600)] dark:text-[var(--gray-400)]')}>
+                        active ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' : 'text-[var(--gray-600)] dark:text-[var(--gray-400)]')}>
                       <item.icon size={18} /> {item.label}
                     </Link>
                   )
@@ -147,7 +147,7 @@ export default function AppLayout() {
 
       {/* FAB */}
       <Link to="/transactions?add=true"
-        className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center justify-center active:scale-90 transition-transform lg:hidden">
+        className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-emerald-600 rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center active:scale-90 transition-transform lg:hidden">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
       </Link>
 
@@ -159,10 +159,10 @@ export default function AppLayout() {
             return (
               <Link key={item.path} to={item.path} onClick={() => playSound('click')}
                 className={cn('flex flex-col items-center py-1.5 px-3 min-w-[56px] rounded-xl transition-all',
-                  active ? 'text-[var(--flow-brand-600)] dark:text-indigo-400' : 'text-[var(--gray-400)] dark:text-[var(--gray-600)]')}>
+                  active ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--gray-400)] dark:text-[var(--gray-600)]')}>
                 <item.icon size={20} strokeWidth={active ? 2.5 : 1.5} />
                 <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
-                {active && <div className="w-1 h-1 rounded-full bg-[var(--flow-brand-500)] dark:bg-indigo-400 mt-0.5" />}
+                {active && <div className="w-1 h-1 rounded-full bg-emerald-500 dark:bg-emerald-400 mt-0.5" />}
               </Link>
             )
           })}

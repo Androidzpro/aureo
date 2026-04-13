@@ -1,114 +1,239 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '@/lib/data'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '@/store/authStore'
+import { FlowLogo } from '@/components/FlowLogo'
+import { Eye, EyeOff, Loader2, AlertCircle, Check, Mail } from 'lucide-react'
 
-const schema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+const loginSchema = z.object({
+  email: z.string().email('Ingresa un correo válido'),
+  password: z.string().min(1, 'Ingresa tu contraseña'),
 })
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
-  const [resetSent, setResetSent] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+  const [resetSent, setResetSent] = useState(false)
 
-  const onSubmit = async (data: { email: string; password: string }) => {
-    try { setIsLoading(true); setError(''); await login(data.email, data.password); navigate('/') }
-    catch (e: any) { setError(e?.message || 'Error al ingresar') }
-    finally { setIsLoading(false) }
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  })
+
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      setIsLoading(true)
+      setError('')
+      await login(data.email, data.password)
+      navigate('/')
+    } catch (e: any) {
+      if (e?.message?.includes('Invalid login')) {
+        setError('Correo o contraseña incorrectos')
+      } else if (e?.message?.includes('Email not confirmed')) {
+        setError('Revisa tu correo para confirmar tu cuenta')
+      } else {
+        setError('Error al iniciar sesión. Intenta de nuevo.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleReset = async () => {
-    if (!resetEmail) return
+    if (!resetEmail || !z.string().email().safeParse(resetEmail).success) return
     setResetLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    if (error) { setError(error.message) }
-    else { setResetSent(true) }
-    setResetLoading(false)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) setError(error.message)
+      else setResetSent(true)
+    } catch (e: any) {
+      setError('Error al enviar el correo')
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
+  // Forgot password modal
+  if (showReset) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <FlowLogo size={32} className="justify-center" theme="light" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+            {resetSent ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail size={24} className="text-emerald-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Revisa tu correo</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  Enviamos un enlace para restablecer tu contraseña a <strong>{resetEmail}</strong>
+                </p>
+                <button onClick={() => { setShowReset(false); setResetSent(false) }} className="btn-secondary w-full">
+                  Volver al login
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="text-center mb-6">
+                  <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mail size={24} className="text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Recuperar contraseña</h2>
+                  <p className="text-sm text-gray-500">Ingresa tu correo y te enviaremos un enlace para restablecerla</p>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1.5 block">Correo electrónico</label>
+                    <input
+                      value={resetEmail}
+                      onChange={e => setResetEmail(e.target.value)}
+                      type="email"
+                      placeholder="tu@email.com"
+                      className="input"
+                    />
+                  </div>
+                  {error && (
+                    <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                      <AlertCircle size={14} /> {error}
+                    </div>
+                  )}
+                  <button onClick={handleReset} disabled={resetLoading || !resetEmail} className="btn-primary w-full">
+                    {resetLoading ? <><Loader2 size={16} className="animate-spin" /> Enviando...</> : 'Enviar enlace'}
+                  </button>
+                  <button onClick={() => setShowReset(false)} className="btn-ghost w-full">
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-      </div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm relative z-10">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 bg-white/20 backdrop-blur-xl rounded-3xl flex items-center justify-center">
-            <span className="text-4xl">💰</span>
-          </div>
-          <h1 className="text-2xl font-black text-white">FlowFin</h1>
-          <p className="text-white/70 text-sm mt-1">Tu asistente financiero</p>
+    <div className="min-h-screen flex">
+      {/* Left side - Branding (desktop) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 items-center justify-center p-12 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl" />
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-2xl">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Iniciar sesión</h2>
-          <p className="text-sm text-gray-400 mb-5">Ingresa tus credenciales</p>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Correo</label>
-              <input type="email" placeholder="tu@email.com" className="w-full h-12 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" {...register('email')} />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
-            </div>
-            <div>
-              <label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Contraseña</label>
-              <input type="password" placeholder="••••••••" className="w-full h-12 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" {...register('password')} />
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
-            </div>
-            <button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-300/50 active:scale-[0.98] transition-all disabled:opacity-50">
-              {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Entrar'}
-            </button>
-          </form>
-          {error && <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl text-xs text-red-600 text-center">{error}</div>}
 
-          {/* Forgot password link */}
-          <button onClick={() => setShowReset(true)} className="w-full text-center text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-3 hover:underline">
-            ¿Olvidaste tu contraseña?
-          </button>
-
-          <p className="text-center text-xs text-gray-500 mt-3">
-            ¿No tienes cuenta? <Link to="/register" className="text-indigo-600 dark:text-indigo-400 font-semibold">Crear cuenta gratis</Link>
+        <div className="relative z-10 max-w-md text-center">
+          <FlowLogo size={48} variant="full" theme="light" className="justify-center mb-8" />
+          <h1 className="text-4xl font-bold text-white mb-4">Tu dinero, bajo control</h1>
+          <p className="text-lg text-gray-300 leading-relaxed">
+            Gestiona tus finanzas con inteligencia. FlowFin te ayuda a tomar mejores decisiones con tu dinero.
           </p>
-        </div>
-      </motion.div>
-
-      {/* Reset Password Modal */}
-      {showReset && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={() => { setShowReset(false); setResetSent(false) }}>
-          <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Recuperar contraseña</h3>
-            <p className="text-xs text-gray-500 mb-4">Te enviaremos un correo para restablecerla</p>
-            {resetSent ? (
-              <div className="text-center py-4">
-                <p className="text-2xl mb-2">📧</p>
-                <p className="text-sm font-medium text-emerald-600">Correo enviado</p>
-                <p className="text-xs text-gray-400 mt-1">Revisa tu bandeja de entrada</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <input value={resetEmail} onChange={e => setResetEmail(e.target.value)} type="email" placeholder="tu@email.com" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500" />
-                <div className="flex gap-2">
-                  <button onClick={() => { setShowReset(false); setResetSent(false) }} className="flex-1 h-11 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-xs">Cancelar</button>
-                  <button onClick={handleReset} disabled={resetLoading} className="flex-1 h-11 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl text-xs disabled:opacity-50">{resetLoading ? 'Enviando...' : 'Enviar'}</button>
-                </div>
-              </div>
-            )}
+          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-gray-400">
+            <div className="flex items-center gap-2"><Check size={14} className="text-emerald-500" /> Seguro</div>
+            <div className="flex items-center gap-2"><Check size={14} className="text-emerald-500" /> Gratuito</div>
+            <div className="flex items-center gap-2"><Check size={14} className="text-emerald-500" /> Inteligente</div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Right side - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <FlowLogo size={36} className="justify-center" theme="light" />
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900">Iniciar sesión</h2>
+              <p className="text-sm text-gray-500 mt-1">Ingresa tus credenciales para continuar</p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1.5 block">Correo electrónico</label>
+                <input
+                  type="email"
+                  placeholder="tu@email.com"
+                  className={cn('input', errors.email && 'border-red-300 focus:border-red-500 focus:ring-red-500/20')}
+                  {...register('email')}
+                />
+                {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-medium text-gray-600">Contraseña</label>
+                  <button type="button" onClick={() => setShowReset(true)} className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="input pr-12"
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password.message}</p>}
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2.5 rounded-lg">
+                  <AlertCircle size={14} className="flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                {isLoading ? <><Loader2 size={16} className="animate-spin" /> Iniciando sesión...</> : 'Iniciar sesión'}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                ¿No tienes cuenta?{' '}
+                <Link to="/register" className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+                  Crear cuenta gratis
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Al continuar, aceptas nuestros Términos de servicio y Política de privacidad
+          </p>
+        </motion.div>
+      </div>
     </div>
   )
+}
+
+function cn(...classes: (string | boolean | undefined | null)[]) {
+  return classes.filter(Boolean).join(' ')
 }
