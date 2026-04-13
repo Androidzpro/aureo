@@ -22,31 +22,33 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: { name: string; email: string; password: string }) => {
     try { setIsLoading(true); setError(''); await reg(data.name, data.email, data.password); navigate('/') }
-    catch (e: any) { setError(e?.message || 'Error al crear la cuenta') }
+    catch (e: any) { setError(e?.message || 'Error al crear cuenta') }
     finally { setIsLoading(false) }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-7 h-7 mx-auto mb-4"><img src="/logo.svg" alt="" className="w-full h-full" /></div>
-          <h1 className="text-base font-semibold text-[#1A1A1A]">Crear cuenta</h1>
-          <p className="text-xs text-[#707070] mt-1">Empieza a controlar tus finanzas</p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 mx-auto mb-3 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center"><span className="text-3xl">💰</span></div>
+          <h1 className="text-xl font-black text-white">Crear cuenta</h1>
+          <p className="text-white/70 text-sm mt-1">Empieza a controlar tus finanzas</p>
         </div>
-        <div className="border border-[#EAEAEA] rounded-lg p-5">
+
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-5 shadow-2xl">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
-            <div><label className="text-[10px] font-medium text-[#707070] uppercase tracking-[0.04em] mb-1.5 block">Nombre</label><input placeholder="Tu nombre" className="input" {...register('name')} />{errors.name && <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>}</div>
-            <div><label className="text-[10px] font-medium text-[#707070] uppercase tracking-[0.04em] mb-1.5 block">Correo</label><input type="email" placeholder="tu@email.com" className="input" {...register('email')} />{errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}</div>
-            <div><label className="text-[10px] font-medium text-[#707070] uppercase tracking-[0.04em] mb-1.5 block">Contraseña</label><input type="password" placeholder="Mínimo 6 caracteres" className="input" {...register('password')} />{errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}</div>
-            <div><label className="text-[10px] font-medium text-[#707070] uppercase tracking-[0.04em] mb-1.5 block">Confirmar</label><input type="password" placeholder="Repite la contraseña" className="input" {...register('confirmPassword')} />{errors.confirmPassword && <p className="text-xs text-red-600 mt-1">{errors.confirmPassword.message}</p>}</div>
-            <button type="submit" disabled={isLoading} className="w-full btn-primary h-9">
-              {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Crear cuenta'}
+            <div><label className="text-xs font-medium text-gray-500 mb-1 block">Nombre</label><input placeholder="Tu nombre" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" {...register('name')} />{errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}</div>
+            <div><label className="text-xs font-medium text-gray-500 mb-1 block">Correo</label><input type="email" placeholder="tu@email.com" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" {...register('email')} />{errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}</div>
+            <div><label className="text-xs font-medium text-gray-500 mb-1 block">Contraseña</label><input type="password" placeholder="Mínimo 6 caracteres" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" {...register('password')} />{errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}</div>
+            <div><label className="text-xs font-medium text-gray-500 mb-1 block">Confirmar</label><input type="password" placeholder="Repite la contraseña" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" {...register('confirmPassword')} />{errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}</div>
+            <button type="submit" disabled={isLoading} className="w-full h-11 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-300/50 active:scale-[0.98] transition-all disabled:opacity-50">
+              {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Crear cuenta'}
             </button>
           </form>
-          {error && <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md text-xs text-red-600 text-center">{error}</div>}
+          {error && <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl text-xs text-red-600 text-center">{error}</div>}
         </div>
-        <p className="text-center text-xs text-[#707070] mt-6">¿Ya tienes cuenta? <Link to="/login" className="text-[#1A1A1A] font-medium hover:underline">Iniciar sesión</Link></p>
+
+        <p className="text-center text-sm text-white/60 mt-5">¿Ya tienes cuenta? <Link to="/login" className="text-white font-semibold">Iniciar sesión</Link></p>
       </motion.div>
     </div>
   )
