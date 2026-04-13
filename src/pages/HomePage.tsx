@@ -11,12 +11,13 @@ import { ConfirmDialog, EmptyState } from '@/components/UI'
 import { FlowScoreCard } from '@/components/FlowScoreCard'
 import { FlowCoachBanner, FlowCoachFeed } from '@/components/FlowCoachFeed'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import type { Transaction, Debt, Budget } from '@/types'
 
 export default function HomePage() {
   const { profile } = useAuthStore()
-  const [txs, setTxs] = useState<any[]>([])
-  const [debts, setDebts] = useState<any[]>([])
-  const [budgets, setBudgets] = useState<any[]>([])
+  const [txs, setTxs] = useState<Transaction[]>([])
+  const [debts, setDebts] = useState<Debt[]>([])
+  const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadAll() }, [profile?.id])

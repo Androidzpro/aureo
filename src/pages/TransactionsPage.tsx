@@ -6,14 +6,15 @@ import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, getCat, playSound, cn } from '@/lib/data'
 import { ConfirmDialog, EmptyState } from '@/components/UI'
+import type { Transaction } from '@/types'
 
 export default function TransactionsPage() {
   const [searchParams] = useSearchParams()
   const { profile } = useAuthStore()
-  const [txs, setTxs] = useState<any[]>([])
+  const [txs, setTxs] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(searchParams.get('add') === 'true')
-  const [editing, setEditing] = useState<any>(null)
+  const [editing, setEditing] = useState<Transaction | null>(null)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [form, setForm] = useState({ description: '', amount: '', type: 'expense' as string, category_id: '', date: new Date().toISOString().split('T')[0] })

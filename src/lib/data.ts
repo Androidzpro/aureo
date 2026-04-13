@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Category } from '@/types'
 
-// Supabase config - hardcoded since Vercel env vars are empty
+// Supabase config
 const SUPABASE_URL = 'https://ibgmvprphhdtxnlexkgz.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliZ212cHJwaGhkdHhubGV4a2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAyMTksImV4cCI6MjA5MTQwNjIxOX0.wDi6SST4rxDSfwNGj9pv4Ks4UD14bQEB4RdC6YMT2Aw'
 

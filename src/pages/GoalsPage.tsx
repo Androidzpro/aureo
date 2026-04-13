@@ -5,18 +5,18 @@ import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, playSound, cn } from '@/lib/data'
 import { ConfirmDialog, EmptyState } from '@/components/UI'
+import type { SavingsGoal } from '@/types'
 
-interface Goal { id: string; name: string; target_amount: number; current_amount: number; deadline: string | null; emoji: string; color: string; is_active: boolean }
 const COLORS = ['#6366F1','#10B981','#F59E0B','#EC4899','#8B5CF6','#3B82F6']
 
 export default function GoalsPage() {
   const { profile } = useAuthStore()
-  const [goals, setGoals] = useState<Goal[]>([])
+  const [goals, setGoals] = useState<SavingsGoal[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showContrib, setShowContrib] = useState(false)
-  const [editing, setEditing] = useState<Goal | null>(null)
-  const [selected, setSelected] = useState<Goal | null>(null)
+  const [editing, setEditing] = useState<SavingsGoal | null>(null)
+  const [selected, setSelected] = useState<SavingsGoal | null>(null)
   const [form, setForm] = useState({ name: '', target: '', current: '0', emoji: '🎯' })
   const [cForm, setCForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0] })
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)

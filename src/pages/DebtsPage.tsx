@@ -5,8 +5,7 @@ import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, playSound, cn } from '@/lib/data'
 import { ConfirmDialog, EmptyState } from '@/components/UI'
-
-interface Debt { id: string; name: string; total_amount: number; paid_amount: number; interest_rate: number; creditor: string; status: string; min_payment: number | null; due_date: string | null; notes: string | null }
+import type { Debt } from '@/types'
 
 export default function DebtsPage() {
   const { profile } = useAuthStore()

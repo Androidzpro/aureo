@@ -1,18 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from '@/lib/data'
-
-interface Profile {
-  id: string
-  name: string
-  email: string
-  currency: string
-  monthly_income: number | null
-  income_type: string
-  has_debts: boolean
-  goal_type: string
-  onboarded: boolean
-}
+import type { Profile, GoalType, IncomeType } from '@/types'
 
 interface AuthState {
   profile: Profile | null
@@ -23,7 +12,7 @@ interface AuthState {
   logout: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
-  completeOnboarding: (data: { currency: string; monthly_income: number; income_type: string; has_debts: boolean; goal_type: string }) => Promise<void>
+  completeOnboarding: (data: { currency: string; monthly_income: number; income_type: IncomeType; has_debts: boolean; goal_type: GoalType }) => Promise<void>
   updatePassword: (newPass: string) => Promise<void>
   updateCurrency: (currency: string) => Promise<void>
 }
