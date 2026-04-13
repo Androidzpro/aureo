@@ -22,7 +22,7 @@ export default function HomePage() {
   useEffect(() => { loadAll() }, [profile?.id])
 
   const loadAll = async () => {
-    if (!profile?.id) return
+    if (!profile?.id) { setLoading(false); return }
     try {
       const [txRes, debtRes, budgetRes] = await Promise.allSettled([
         supabase.from('transactions').select('*').eq('user_id', profile.id).order('date', { ascending: false }).limit(100),
@@ -51,7 +51,14 @@ export default function HomePage() {
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([id, value]) => ({ ...getCat(id), value }))
   }, [mTxs])
 
-  if (!profile?.onboarded) return null
+  // Show loading while profile data is loading
+  if (!profile) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pb-8">

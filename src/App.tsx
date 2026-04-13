@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { useAuthStore, loadSession } from '@/store/authStore'
@@ -15,26 +15,34 @@ import BudgetsPage from '@/pages/BudgetsPage'
 import ReportsPage from '@/pages/ReportsPage'
 import SettingsPage from '@/pages/SettingsPage'
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+    </div>
+  )
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isLoading = useAuthStore(s => s.isLoading)
   const auth = useAuthStore(s => s.isAuthenticated)
   const onboarded = useAuthStore(s => s.profile?.onboarded)
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
-      </div>
-    )
-  }
-
+  if (isLoading) return <LoadingScreen />
   if (!auth) return <Navigate to="/login" replace />
   if (!onboarded) return <Navigate to="/onboarding" replace />
   return <>{children}</>
 }
 
-function App() {
-  useEffect(() => { loadSession() }, [])
+export default function App() {
+  const [initialized, setInitialized] = useState(false)
+
+  useEffect(() => {
+    loadSession().finally(() => setInitialized(true))
+  }, [])
+
+  if (!initialized) return <LoadingScreen />
+
   return (
     <AuthProvider>
       <Routes>
@@ -56,5 +64,3 @@ function App() {
     </AuthProvider>
   )
 }
-
-export default App
