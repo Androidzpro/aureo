@@ -6,15 +6,15 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieC
 import { Download } from 'lucide-react'
 
 export default function ReportsPage() {
-  const { user } = useAuthStore()
+  const { profile } = useAuthStore()
   const [txs, setTxs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('overview')
 
   useEffect(() => {
-    if (!user?.id) return
-    supabase.from('transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }).then(({ data }) => { if (data) setTxs(data); setLoading(false) })
-  }, [user?.id])
+    if (!profile?.id) return
+    supabase.from('transactions').select('*').eq('user_id', profile.id).order('date', { ascending: false }).then(({ data }) => { if (data) setTxs(data); setLoading(false) })
+  }, [profile?.id])
 
   const score = calcScore(txs)
   const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
@@ -40,7 +40,15 @@ export default function ReportsPage() {
   }, [txs])
 
   const exportCSV = () => {
-    const rows = txs.map(t => [new Date(t.date).toLocaleDateString('es-MX'), t.description, t.type === 'income' ? 'Ingreso' : 'Gasto', getCat(t.category_id).name, t.amount].join(','))
+    // FIX: properly escape CSV fields
+    const escape = (s: string) => `"${s.replace(/"/g, '""')}"`
+    const rows = txs.map(t => [
+      new Date(t.date).toLocaleDateString('es-MX'),
+      escape(t.description),
+      t.type === 'income' ? 'Ingreso' : 'Gasto',
+      getCat(t.category_id).name,
+      t.amount.toFixed(2)
+    ].join(','))
     const blob = new Blob(['\ufeffFecha,Descripcion,Tipo,Categoria,Monto\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `flowfin_${new Date().toISOString().split('T')[0]}.csv`; a.click()
   }
@@ -51,7 +59,7 @@ export default function ReportsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
         <div><h1 className="text-lg font-bold text-gray-900 dark:text-white">Reportes</h1><p className="text-xs text-gray-400">Análisis de tus finanzas</p></div>
-        <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300"><Download size={13} /> CSV</button>
+        <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300"><Download size={13} /> CSV</button>
       </div>
 
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
@@ -61,23 +69,23 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Ingresos</p><p className="text-base font-bold text-emerald-600">{formatCurrency(income)}</p></div>
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Gastos</p><p className="text-base font-bold text-red-600">{formatCurrency(expense)}</p></div>
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Ahorro</p><p className="text-base font-bold text-gray-900 dark:text-white">{savingsRate.toFixed(1)}%</p></div>
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Score</p><p className={cn('text-base font-bold', score >= 60 ? 'text-gray-900 dark:text-white' : 'text-red-600')}>{score}%</p></div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Ingresos</p><p className="text-base font-bold text-emerald-600">{formatCurrency(income, profile?.currency)}</p></div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Gastos</p><p className="text-base font-bold text-red-600">{formatCurrency(expense, profile?.currency)}</p></div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Ahorro</p><p className="text-base font-bold text-gray-900 dark:text-white">{savingsRate.toFixed(1)}%</p></div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Score</p><p className={cn('text-base font-bold', score >= 60 ? 'text-gray-900 dark:text-white' : 'text-red-600')}>{score}%</p></div>
       </div>
 
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
         {tab === 'overview' && (
           <>
             <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-3">Ingresos vs Gastos</h3>
             {monthlyData.some(m => m.income > 0 || m.expense > 0) ? (
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => formatCurrency(v)} /><Legend />
+                <BarChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => formatCurrency(v, profile?.currency)} /><Legend />
                   <Bar dataKey="income" fill="#10B981" name="Ingresos" radius={[4,4,0,0]} /><Bar dataKey="expense" fill="#EF4444" name="Gastos" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <p className="text-center text-gray-400 py-8 text-xs">Sin datos</p>}
+            ) : <p className="text-center text-gray-400 py-8 text-xs">Sin datos suficientes</p>}
           </>
         )}
         {tab === 'trends' && (
@@ -85,7 +93,7 @@ export default function ReportsPage() {
             <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-3">Evolución</h3>
             {monthlyData.some(m => m.income > 0 || m.expense > 0) ? (
               <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip formatter={(v: number) => formatCurrency(v)} />
+                <AreaChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip formatter={(v: number) => formatCurrency(v, profile?.currency)} />
                   <Area type="monotone" dataKey="income" stroke="#10B981" fill="#10B98115" strokeWidth={2} name="Ingresos" /><Area type="monotone" dataKey="expense" stroke="#EF4444" fill="#EF444415" strokeWidth={2} name="Gastos" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -97,9 +105,9 @@ export default function ReportsPage() {
             <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-3">Gastos por categoría</h3>
             {catData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
-                <PieChart><Pie data={catData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, pct }) => `${name} ${(pct*100).toFixed(0)}%`} labelLine={false}>
+                <PieChart><Pie data={catData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                   {catData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                </Pie><Tooltip formatter={(v: number) => formatCurrency(v)} /></PieChart>
+                </Pie><Tooltip formatter={(v: number) => formatCurrency(v, profile?.currency)} /></PieChart>
               </ResponsiveContainer>
             ) : <p className="text-center text-gray-400 py-8 text-xs">Sin gastos</p>}
           </>
