@@ -6,8 +6,10 @@ import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, getCat, playSound, cn } from '@/lib/data'
 import { calcFlowScore } from '@/lib/flowScore'
+import { generateCoachAlerts } from '@/lib/flowCoach'
 import { ConfirmDialog, EmptyState } from '@/components/UI'
 import { FlowScoreCard } from '@/components/FlowScoreCard'
+import { FlowCoachBanner, FlowCoachFeed } from '@/components/FlowCoachFeed'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
 export default function HomePage() {
@@ -39,6 +41,7 @@ export default function HomePage() {
   const mIncome = mTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const mExpense = mTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const flowScore = calcFlowScore(txs, debts, profile?.monthly_income, profile?.goal_type)
+  const coachAlerts = useMemo(() => generateCoachAlerts(txs, debts, budgets, profile), [txs, debts, budgets, profile])
 
   const catData = useMemo(() => {
     const map: Record<string, number> = {}
@@ -97,24 +100,11 @@ export default function HomePage() {
       {/* FlowScore Card */}
       <FlowScoreCard score={flowScore} />
 
-      {/* Coach Insights from FlowScore */}
-      {flowScore.recommendations.length > 0 && txs.length > 0 && (
-        <div className="space-y-2">
-          {flowScore.recommendations.slice(0, 2).map((rec, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}
-              className={cn('rounded-xl p-3 border flex items-start gap-2.5',
-                rec.priority === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20' :
-                rec.priority === 'medium' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20' :
-                'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20')}>
-              <span className="text-base mt-0.5">{rec.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">{rec.title}</p>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{rec.message}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+      {/* Flow Coach Banner - Critical/Warning alert */}
+      <FlowCoachBanner alerts={coachAlerts} />
+
+      {/* Flow Coach Feed - Full insights */}
+      {coachAlerts.length > 0 && <FlowCoachFeed alerts={coachAlerts} />}
 
       {/* Category Breakdown */}
       {catData.length > 0 && (
