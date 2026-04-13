@@ -4,52 +4,128 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 250 85% 65%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 250 60% 95%;
-    --secondary-foreground: 250 85% 65%;
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 160 70% 45%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 142 76% 42%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 52%;
-    --warning-foreground: 0 0% 100%;
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 250 85% 65%;
-    --radius: 1rem;
+    --card-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
   }
 }
 
 @layer base {
   * { @apply border-border; }
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    @apply bg-white text-[#1A1A1A];
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
-    overscroll-behavior: none;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
   }
-  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #E5E5E5; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #D4D4D4; }
 }
 
 @layer components {
-  .card-hover { @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5; }
-  .text-gradient { @apply bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent; }
+  /* Linear-style subtle borders */
+  .card {
+    @apply bg-white border border-[#EAEAEA] rounded-lg;
+  }
+  .card-hover {
+    @apply transition-all duration-150 hover:border-[#D4D4D4] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)];
+  }
+
+  /* Stripe-style buttons */
+  .btn-primary {
+    @apply bg-[#1A1A1A] text-white font-medium rounded-lg px-4 py-2 text-sm
+           hover:bg-[#333] transition-colors duration-150 active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply bg-white text-[#1A1A1A] font-medium rounded-lg px-4 py-2 text-sm
+           border border-[#EAEAEA] hover:bg-[#FAFAFA] transition-colors duration-150 active:scale-[0.98];
+  }
+  .btn-danger {
+    @apply bg-white text-red-600 font-medium rounded-lg px-4 py-2 text-sm
+           border border-red-200 hover:bg-red-50 transition-colors duration-150;
+  }
+
+  /* Notion-style inputs */
+  .input {
+    @apply w-full h-9 bg-white border border-[#EAEAEA] rounded-lg px-3 text-sm
+           placeholder:text-[#A0A0A0] focus:border-[#1A1A1A] focus:ring-1 focus:ring-[#1A1A1A]/20
+           transition-all duration-150;
+  }
+
+  /* Clean table */
+  .table-row {
+    @apply flex items-center justify-between p-3 border-b border-[#F0F0F0] last:border-0
+           hover:bg-[#FAFAFA] transition-colors duration-100;
+  }
+
+  /* KPI Card */
+  .kpi {
+    @apply bg-white border border-[#EAEAEA] rounded-lg p-5;
+  }
+  .kpi-label {
+    @apply text-xs font-medium text-[#707070] uppercase tracking-[0.05em] mb-1;
+  }
+  .kpi-value {
+    @apply text-2xl font-semibold text-[#1A1A1A] tracking-tight;
+  }
+
+  /* Tag */
+  .tag {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
+  }
+
+  /* Sidebar */
+  .sidebar-link {
+    @apply flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm text-[#5C5C5C]
+           hover:bg-[#F5F5F5] hover:text-[#1A1A1A] transition-colors duration-100;
+  }
+  .sidebar-link-active {
+    @apply flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm bg-[#F0F0F0] text-[#1A1A1A] font-medium;
+  }
+
+  /* Page header */
+  .page-header {
+    @apply mb-6;
+  }
+  .page-title {
+    @apply text-xl font-semibold text-[#1A1A1A] tracking-tight;
+  }
+  .page-subtitle {
+    @apply text-sm text-[#707070] mt-0.5;
+  }
+
+  /* Empty state */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 text-center;
+  }
 }
 
-/* React Calendar overrides */
-.react-calendar { border: none !important; font-family: 'Inter', sans-serif !important; }
-.react-calendar__tile--active { background: linear-gradient(135deg, #6366F1, #8B5CF6) !important; border-radius: 0.75rem !important; }
-.react-calendar__tile--now { background: #EEF2FF !important; border-radius: 0.75rem !important; }
-.react-calendar__navigation button { color: #1F2937 !important; font-weight: 700 !important; }
+@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+
+/* React Calendar - clean style */
+.react-calendar { border: none !important; font-family: 'Inter', sans-serif !important; width: 100% !important; }
+.react-calendar__tile--active { background: #1A1A1A !important; border-radius: 6px !important; color: white !important; }
+.react-calendar__tile--now { background: #F5F5F5 !important; border-radius: 6px !important; }
+.react-calendar__navigation button { color: #1A1A1A !important; font-weight: 600 !important; font-size: 14px !important; }
+.react-calendar__month-view__days__day { font-size: 13px !important; }
 .react-calendar__month-view__days__day--weekend { color: #EF4444 !important; }
+abbr[title] { text-decoration: none !important; }

@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { supabase, getCat, formatCurrency, analyzeFinances } from '@/lib/data'
+import { supabase, getCat, formatCurrency, analyzeFinances, cn } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid } from 'recharts'
 import { Download } from 'lucide-react'
-import { cn } from '@/lib/data'
 
 export default function ReportsPage() {
   const { profile } = useAuthStore()
@@ -18,7 +17,6 @@ export default function ReportsPage() {
   }, [profile?.id])
 
   const analysis = useMemo(() => analyzeFinances(txs), [txs])
-
   const monthlyData = useMemo(() => {
     const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
     const now = new Date(); const data = []
@@ -33,7 +31,7 @@ export default function ReportsPage() {
   const catData = useMemo(() => {
     const map: Record<string, number> = {}
     txs.filter(t => t.type === 'expense').forEach(t => { const c = getCat(t.category_id); map[c.name] = (map[c.name] || 0) + t.amount })
-    const colors = ['#EF4444','#F59E0B','#8B5CF6','#EC4899','#10B981','#3B82F6','#6366F1','#64748B','#A855F7','#F97316']
+    const colors = ['#EF4444','#F59E0B','#8B5CF6','#EC4899','#10B981','#3B82F6','#6366F1','#64748B']
     return Object.entries(map).sort((a,b) => b[1] - a[1]).slice(0, 8).map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }))
   }, [txs])
 
@@ -43,81 +41,81 @@ export default function ReportsPage() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `flowfin_${new Date().toISOString().split('T')[0]}.csv`; a.click()
   }
 
-  if (loading) return <div className="text-center py-12 text-gray-300">Cargando...</div>
+  if (loading) return <div className="text-center py-12 text-[#A0A0A0] text-sm">Cargando...</div>
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="flex items-center justify-between mb-5">
-        <div><h1 className="text-2xl font-extrabold text-gray-900">Reportes 📊</h1><p className="text-gray-400 text-sm">Análisis de tus finanzas</p></div>
-        <button onClick={exportCSV} className="bg-white border border-gray-200 text-gray-700 font-medium h-10 px-3 rounded-xl flex items-center gap-1 text-sm"><Download size={14} /> CSV</button>
+    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div><h1 className="page-title">Reportes</h1><p className="page-subtitle">Análisis de tus finanzas</p></div>
+        <button onClick={exportCSV} className="btn-secondary flex items-center gap-1.5"><Download size={14} /> Exportar</button>
       </div>
 
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5 w-fit">
+      <div className="flex gap-1 bg-[#F5F5F5] rounded-md p-0.5 mb-6 w-fit">
         {[{ k: 'overview', l: 'General' }, { k: 'trends', l: 'Tendencias' }, { k: 'categories', l: 'Categorías' }].map(t => (
-          <button key={t.k} onClick={() => setTab(t.k)} className={cn('px-4 py-2 rounded-lg text-sm font-semibold transition-all', tab === t.k ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500')}>{t.l}</button>
+          <button key={t.k} onClick={() => setTab(t.k)} className={cn('px-3 py-1.5 rounded text-xs font-medium transition-all', tab === t.k ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-[#707070] hover:text-[#1A1A1A]')}>{t.l}</button>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><p className="text-[10px] text-gray-400 uppercase font-semibold">Ingresos</p><p className="text-lg font-bold text-emerald-600">{formatCurrency(analysis.income)}</p></div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><p className="text-[10px] text-gray-400 uppercase font-semibold">Gastos</p><p className="text-lg font-bold text-red-600">{formatCurrency(analysis.expense)}</p></div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><p className="text-[10px] text-gray-400 uppercase font-semibold">Ahorro</p><p className="text-lg font-bold text-indigo-600">{analysis.savingsRate.toFixed(1)}%</p></div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><p className="text-[10px] text-gray-400 uppercase font-semibold">Score</p><p className={cn('text-lg font-bold', analysis.score >= 60 ? 'text-emerald-600' : 'text-red-600')}>{analysis.score}%</p></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="kpi"><p className="kpi-label">Ingresos</p><p className="kpi-value text-emerald-600">{formatCurrency(analysis.income)}</p></div>
+        <div className="kpi"><p className="kpi-label">Gastos</p><p className="kpi-value text-red-600">{formatCurrency(analysis.expense)}</p></div>
+        <div className="kpi"><p className="kpi-label">Tasa de ahorro</p><p className="kpi-value text-[#1A1A1A]">{analysis.savingsRate.toFixed(1)}%</p></div>
+        <div className="kpi"><p className="kpi-label">Score</p><p className={cn('kpi-value', analysis.score >= 60 ? 'text-[#1A1A1A]' : 'text-red-600')}>{analysis.score}%</p></div>
       </div>
 
-      {tab === 'overview' && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <h3 className="font-bold text-gray-900 mb-4">Ingresos vs Gastos (6 meses)</h3>
-          {monthlyData.some(m => m.income > 0 || m.expense > 0) ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" /><XAxis dataKey="month" fontSize={12} /><YAxis fontSize={12} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => formatCurrency(v)} /><Legend />
-                <Bar dataKey="income" fill="#10B981" name="Ingresos" radius={[6,6,0,0]} /><Bar dataKey="expense" fill="#EF4444" name="Gastos" radius={[6,6,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : <p className="text-center text-gray-400 py-12">Sin datos suficientes</p>}
-        </div>
-      )}
-
-      {tab === 'trends' && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <h3 className="font-bold text-gray-900 mb-4">Evolución financiera</h3>
-          {monthlyData.some(m => m.income > 0 || m.expense > 0) ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" /><XAxis dataKey="month" fontSize={12} /><YAxis fontSize={12} /><Tooltip formatter={(v: number) => formatCurrency(v)} />
-                <Area type="monotone" dataKey="income" stroke="#10B981" fill="#10B98120" strokeWidth={2} name="Ingresos" /><Area type="monotone" dataKey="expense" stroke="#EF4444" fill="#EF444420" strokeWidth={2} name="Gastos" />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : <p className="text-center text-gray-400 py-12">Sin datos</p>}
-        </div>
-      )}
-
-      {tab === 'categories' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-4">Gastos por categoría</h3>
-            {catData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart><Pie data={catData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, pct }) => `${name} ${(pct*100).toFixed(0)}%`} labelLine={false}>
-                  {catData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                </Pie><Tooltip formatter={(v: number) => formatCurrency(v)} /></PieChart>
+      <div className="card p-6">
+        {tab === 'overview' && (
+          <>
+            <h3 className="text-sm font-medium text-[#1A1A1A] mb-4">Ingresos vs Gastos</h3>
+            {monthlyData.some(m => m.income > 0 || m.expense > 0) ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" /><XAxis dataKey="month" fontSize={12} /><YAxis fontSize={12} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} /><Tooltip formatter={(v: number) => formatCurrency(v)} /><Legend />
+                  <Bar dataKey="income" fill="#10B981" name="Ingresos" radius={[4,4,0,0]} /><Bar dataKey="expense" fill="#EF4444" name="Gastos" radius={[4,4,0,0]} />
+                </BarChart>
               </ResponsiveContainer>
-            ) : <p className="text-center text-gray-400 py-12">Sin gastos</p>}
+            ) : <p className="text-center text-[#A0A0A0] py-12 text-sm">Sin datos suficientes</p>}
+          </>
+        )}
+        {tab === 'trends' && (
+          <>
+            <h3 className="text-sm font-medium text-[#1A1A1A] mb-4">Evolución financiera</h3>
+            {monthlyData.some(m => m.income > 0 || m.expense > 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={monthlyData}><CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" /><XAxis dataKey="month" fontSize={12} /><YAxis fontSize={12} /><Tooltip formatter={(v: number) => formatCurrency(v)} />
+                  <Area type="monotone" dataKey="income" stroke="#10B981" fill="#10B98115" strokeWidth={2} name="Ingresos" /><Area type="monotone" dataKey="expense" stroke="#EF4444" fill="#EF444415" strokeWidth={2} name="Gastos" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <p className="text-center text-[#A0A0A0] py-12 text-sm">Sin datos</p>}
+          </>
+        )}
+        {tab === 'categories' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-sm font-medium text-[#1A1A1A] mb-4">Gastos por categoría</h3>
+              {catData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart><Pie data={catData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, pct }) => `${name} ${(pct*100).toFixed(0)}%`} labelLine={false}>
+                    {catData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie><Tooltip formatter={(v: number) => formatCurrency(v)} /></PieChart>
+                </ResponsiveContainer>
+              ) : <p className="text-center text-[#A0A0A0] py-12 text-sm">Sin gastos</p>}
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-[#1A1A1A] mb-4">Ranking</h3>
+              {catData.length > 0 ? (
+                <div className="space-y-3">
+                  {catData.map(cat => { const total = catData.reduce((s, c) => s + c.value, 0); return (
+                    <div key={cat.name}>
+                      <div className="flex justify-between mb-1"><span className="text-xs font-medium text-[#1A1A1A]">{cat.name}</span><span className="text-xs font-medium text-[#5C5C5C]">{formatCurrency(cat.value)}</span></div>
+                      <div className="w-full bg-[#F0F0F0] rounded-full h-1.5"><div className="h-1.5 rounded-full" style={{ width: `${(cat.value/total)*100}%`, backgroundColor: cat.color }} /></div>
+                    </div>
+                  )})}
+                </div>
+              ) : <p className="text-center text-[#A0A0A0] py-12 text-sm">Sin datos</p>}
+            </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-4">Ranking</h3>
-            {catData.length > 0 ? (
-              <div className="space-y-3">
-                {catData.map(cat => { const total = catData.reduce((s, c) => s + c.value, 0); return (
-                  <div key={cat.name}>
-                    <div className="flex justify-between mb-1"><span className="text-sm font-medium text-gray-700">{cat.name}</span><span className="text-sm font-bold">{formatCurrency(cat.value)}</span></div>
-                    <div className="w-full bg-gray-100 rounded-full h-2"><div className="h-2 rounded-full" style={{ width: `${(cat.value/total)*100}%`, backgroundColor: cat.color }} /></div>
-                  </div>
-                )})}
-              </div>
-            ) : <p className="text-center text-gray-400 py-12">Sin datos</p>}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </motion.div>
   )
 }
