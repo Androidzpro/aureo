@@ -60,12 +60,9 @@ export default function RegisterPage() {
     try {
       setIsLoading(true)
       setError('')
-      const result = await reg(data.name, data.email, data.password)
-      if (result && typeof result === 'object' && 'needsVerification' in result) {
-        setConfirmSent(true)
-      } else {
-        navigate('/')
-      }
+      await reg(data.name, data.email, data.password)
+      // Always show confirmation screen - Supabase requires email verification
+      setConfirmSent(true)
     } catch (e: any) {
       if (e?.message?.includes('already registered')) {
         setError('Este correo ya está registrado')
@@ -78,6 +75,7 @@ export default function RegisterPage() {
   }
 
   if (confirmSent) {
+    const userEmail = watch('email') || ''
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
@@ -90,14 +88,23 @@ export default function RegisterPage() {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Revisa tu correo</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Enviamos un enlace de confirmación. Haz clic en él para activar tu cuenta.
+              Enviamos un enlace de confirmación a <strong className="text-gray-900">{userEmail}</strong>.
+              Haz clic en el enlace para activar tu cuenta y poder iniciar sesión.
             </p>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-xs text-amber-700 leading-relaxed">
+                ⚠️ <strong>Importante:</strong> No podrás iniciar sesión hasta confirmar tu correo.
+                Si no ves el correo, revisa spam o solicita uno nuevo.
+              </p>
+            </div>
+
             <div className="space-y-3">
-              <button onClick={() => navigate('/login')} className="btn-primary w-full">
-                Ir al login
+              <button onClick={() => { setConfirmSent(false); setPassword('') }} className="btn-secondary w-full">
+                Corregir correo
               </button>
-              <button onClick={() => setConfirmSent(false)} className="btn-ghost w-full">
-                Volver al registro
+              <button onClick={() => navigate('/login')} className="btn-ghost w-full">
+                Ir al login
               </button>
             </div>
           </div>
