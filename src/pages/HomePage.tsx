@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight } from 'lucide-react'
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, TrendingUp, TrendingDown, Shield, Target, Wallet, ReceiptText } from 'lucide-react'
 import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, getCat, playSound, cn } from '@/lib/data'
@@ -33,9 +33,7 @@ export default function HomePage() {
       if (txRes.status === 'fulfilled' && txRes.value.data) setTxs(txRes.value.data)
       if (debtRes.status === 'fulfilled' && debtRes.value.data) setDebts(debtRes.value.data)
       if (budgetRes.status === 'fulfilled' && budgetRes.value.data) setBudgets(budgetRes.value.data)
-    } catch (e) {
-      console.error('Load error:', e)
-    }
+    } catch (e) { console.error('Load error:', e) }
     finally { setLoading(false) }
   }
 
@@ -43,6 +41,7 @@ export default function HomePage() {
   const mTxs = useMemo(() => txs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }), [txs])
   const mIncome = mTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const mExpense = mTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const balance = mIncome - mExpense
   const flowScore = calcFlowScore(txs, debts, profile?.monthly_income, profile?.goal_type)
   const coachAlerts = useMemo(() => generateCoachAlerts(txs, debts, budgets, profile), [txs, debts, budgets, profile])
 
@@ -52,134 +51,179 @@ export default function HomePage() {
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([id, value]) => ({ ...getCat(id), value }))
   }, [mTxs])
 
-  // Show loading while profile data is loading
-  if (!profile) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (!profile) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-3 border-[var(--gray-200)] border-t-indigo-500 rounded-full animate-spin" /></div>
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pb-8">
-      {/* Balance Card */}
-      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}
-        className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-5 text-white relative overflow-hidden shadow-xl shadow-indigo-300/30 dark:shadow-indigo-900/50">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5 pb-8">
+      {/* Welcome Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-micro">Bienvenido</p>
+          <h1 className="text-heading">{profile.name?.split(' ')[0]}</h1>
+        </div>
+        <Link to="/transactions?add=true" onClick={() => playSound('click')} className="btn-primary hidden lg:flex">
+          <Plus size={16} /> Nuevo
+        </Link>
+      </div>
+
+      {/* Balance Card — Hero */}
+      <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}
+        className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl shadow-indigo-500/20">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-10 translate-x-10" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
+
         <div className="relative z-10">
-          <p className="text-white/60 text-xs font-medium mb-1">Balance del mes</p>
-          <p className="text-3xl font-black tracking-tight">{formatCurrency(mIncome - mExpense, profile.currency)}</p>
-          <div className="flex items-center gap-3 mt-3">
-            <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-2.5 py-1.5">
-              <ArrowUpRight size={11} className="text-emerald-300" />
-              <span className="text-xs font-medium">{formatCurrency(mIncome, profile.currency)}</span>
+          <div className="flex items-center gap-2 mb-1">
+            <Wallet size={14} className="text-white/70" />
+            <p className="text-xs font-medium text-white/70">Balance del mes</p>
+          </div>
+          <p className="text-4xl font-bold tracking-tight mb-4">{formatCurrency(balance, profile.currency)}</p>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <ArrowUpRight size={12} className="text-emerald-300" />
+                <p className="text-[10px] font-medium text-white/60">Ingresos</p>
+              </div>
+              <p className="text-sm font-bold">{formatCurrency(mIncome, profile.currency)}</p>
             </div>
-            <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-2.5 py-1.5">
-              <ArrowDownRight size={11} className="text-red-300" />
-              <span className="text-xs font-medium">{formatCurrency(mExpense, profile.currency)}</span>
+            <div className="flex-1 bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <ArrowDownRight size={12} className="text-red-300" />
+                <p className="text-[10px] font-medium text-white/60">Gastos</p>
+              </div>
+              <p className="text-sm font-bold">{formatCurrency(mExpense, profile.currency)}</p>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Personalized Goal Card */}
-      {profile?.goal_type && txs.length === 0 && (
-        <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-lg flex-shrink-0">
-              {profile.goal_type === 'save' ? '🎯' : profile.goal_type === 'debt_control' ? '💳' : '📊'}
+      {/* Flow Coach Banner */}
+      <FlowCoachBanner alerts={coachAlerts} />
+
+      {/* Quick Actions Grid */}
+      <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { icon: ReceiptText, label: 'Movimientos', path: '/transactions', color: 'from-blue-500 to-cyan-500' },
+          { icon: Target, label: 'Metas', path: '/goals', color: 'from-emerald-500 to-teal-500' },
+          { icon: Wallet, label: 'Deudas', path: '/debts', color: 'from-amber-500 to-orange-500' },
+          { icon: Shield, label: 'Presupuestos', path: '/budgets', color: 'from-violet-500 to-purple-500' },
+        ].map((item, i) => (
+          <Link key={item.path} to={item.path} onClick={() => playSound('click')}
+            className="card p-4 group hover:border-[var(--gray-200)] dark:hover:border-[var(--gray-700)] active:scale-[0.98] transition-all">
+            <div className={cn('w-10 h-10 rounded-xl bg-gradient-to-br', item.color, 'flex items-center justify-center mb-3 shadow-sm group-hover:shadow-md transition-shadow')}>
+              <item.icon size={18} className="text-white" />
             </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-900 dark:text-white">
-                {profile.goal_type === 'save' ? 'Objetivo: Fondo de emergencia' : profile.goal_type === 'debt_control' ? 'Objetivo: Eliminar deudas' : 'Objetivo: Control de gastos'}
-              </p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                {profile.goal_type === 'save'
-                  ? `Tu ingreso es ${formatCurrency(profile.monthly_income || 0, profile.currency)}/mes. Te recomendamos ahorrar al menos ${formatCurrency((profile.monthly_income || 0) * 0.2, profile.currency)} mensuales.`
-                  : profile.goal_type === 'debt_control'
-                  ? 'Registra tus deudas en la sección Deudas y te daremos un plan de pago estratégico.'
-                  : 'Registra cada gasto para saber exactamente a dónde va tu dinero.'}
-              </p>
+            <p className="text-sm font-semibold text-[var(--gray-900)] dark:text-white">{item.label}</p>
+          </Link>
+        ))}
+      </motion.div>
+
+      {/* FlowScore Card */}
+      <FlowScoreCard score={flowScore} />
+
+      {/* Flow Coach Feed */}
+      {coachAlerts.length > 0 && <FlowCoachFeed alerts={coachAlerts} />}
+
+      {/* Category Breakdown */}
+      {catData.length > 0 && (
+        <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }} className="card overflow-hidden">
+          <div className="card-header">
+            <h2 className="text-title">Gastos del mes</h2>
+            <Link to="/reports" className="text-caption hover:text-[var(--gray-700)] dark:hover:text-[var(--gray-300)] flex items-center gap-0.5 transition-colors">
+              Ver todo <ChevronRight size={12} />
+            </Link>
+          </div>
+          <div className="card-body">
+            <div className="flex items-center gap-5">
+              {/* Donut Chart */}
+              <div className="w-20 h-20 flex-shrink-0">
+                <ResponsiveContainer width={80} height={80}>
+                  <PieChart>
+                    <Pie data={catData} cx={40} cy={40} innerRadius={25} outerRadius={36} dataKey="value" stroke="none">
+                      {catData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-2.5">
+                {catData.slice(0, 4).map(cat => {
+                  const pct = mExpense > 0 ? (cat.value / mExpense) * 100 : 0
+                  return (
+                    <div key={cat.id}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{cat.emoji}</span>
+                          <span className="text-xs font-medium text-[var(--gray-700)] dark:text-[var(--gray-300)]">{cat.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-[var(--gray-900)] dark:text-white">{formatCurrency(cat.value, profile.currency)}</span>
+                          <span className="text-[10px] text-[var(--gray-400)]">{pct.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-[var(--gray-100)] dark:bg-[var(--gray-800)] rounded-full h-1">
+                        <div className="h-1 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* FlowScore Card */}
-      <FlowScoreCard score={flowScore} />
-
-      {/* Flow Coach Banner - Critical/Warning alert */}
-      <FlowCoachBanner alerts={coachAlerts} />
-
-      {/* Flow Coach Feed - Full insights */}
-      {coachAlerts.length > 0 && <FlowCoachFeed alerts={coachAlerts} />}
-
-      {/* Category Breakdown */}
-      {catData.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 dark:border-gray-800">
-            <h2 className="text-xs font-semibold text-gray-900 dark:text-white">Gastos del mes</h2>
-            <Link to="/reports" className="text-[10px] text-gray-400">Ver todo →</Link>
-          </div>
-          <div className="flex items-center gap-4 p-4">
-            <div className="w-20 h-20 flex-shrink-0">
-              <ResponsiveContainer width={80} height={80}>
-                <PieChart><Pie data={catData} cx={40} cy={40} innerRadius={25} outerRadius={36} dataKey="value" stroke="none">
-                  {catData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                </Pie></PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex-1 space-y-1.5">
-              {catData.slice(0, 3).map(cat => {
-                const pct = mExpense > 0 ? (cat.value / mExpense) * 100 : 0
-                return (
-                  <div key={cat.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} /><span className="text-[11px] text-gray-600 dark:text-gray-300">{cat.name}</span></div>
-                    <span className="text-[11px] font-medium text-gray-900 dark:text-white">{formatCurrency(cat.value, profile.currency)}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Recent Transactions */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Recientes</h2>
-          <Link to="/transactions" className="text-[10px] text-gray-400">Ver todo →</Link>
-        </div>
-        {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="flex items-center gap-3 p-3"><div className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse" /><div className="flex-1"><div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-24 mb-1 animate-pulse" /><div className="h-2 bg-gray-200 dark:bg-gray-800 rounded w-16 animate-pulse" /></div></div>)}</div>
-          : txs.length === 0 ? <EmptyState emoji="💸" title="Sin movimientos" message="Registra tu primer ingreso o gasto para comenzar" actionLabel="Agregar" />
-            : (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800">
-                {txs.slice(0, 5).map(tx => {
-                  const cat = getCat(tx.category_id)
-                  return (
-                    <div key={tx.id} className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0" style={{ backgroundColor: cat.color + '15' }}>{cat.emoji}</div>
-                        <div className="min-w-0"><p className="text-xs font-medium text-gray-900 dark:text-white truncate">{tx.description}</p><p className="text-[10px] text-gray-400">{cat.name} · {formatDate(tx.date)}</p></div>
-                      </div>
-                      <span className={cn('text-xs font-semibold tabular-nums', tx.type === 'income' ? 'text-emerald-600' : 'text-gray-900 dark:text-white')}>{tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, profile.currency)}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-2">
-        {[{ label: 'Deudas', path: '/debts', emoji: '💳' }, { label: 'Metas', path: '/goals', emoji: '🎯' }, { label: 'Calendario', path: '/calendar', emoji: '📅' }].map(item => (
-          <Link key={item.path} to={item.path} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
-            <span className="text-xl">{item.emoji}</span><span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{item.label}</span>
+      <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-title">Recientes</h2>
+          <Link to="/transactions" className="text-caption hover:text-[var(--gray-700)] dark:hover:text-[var(--gray-300)] flex items-center gap-0.5 transition-colors">
+            Ver todo <ChevronRight size={12} />
           </Link>
-        ))}
-      </div>
+        </div>
+
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="card p-4 flex items-center gap-3">
+                <div className="w-10 h-10 skeleton-circle" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 skeleton w-24" />
+                  <div className="h-2 skeleton w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : txs.length === 0 ? (
+          <EmptyState emoji="💸" title="Sin movimientos" message="Registra tu primer ingreso o gasto para comenzar" actionLabel="Agregar" />
+        ) : (
+          <div className="card overflow-hidden divide-y divide-[var(--gray-50)] dark:divide-[var(--gray-800)]">
+            {txs.slice(0, 5).map(tx => {
+              const cat = getCat(tx.category_id)
+              return (
+                <div key={tx.id} className="flex items-center justify-between px-4 py-3.5 hover:bg-[var(--gray-50)] dark:hover:bg-[var(--gray-800)/50] transition-colors group">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0" style={{ backgroundColor: cat.color + '15' }}>{cat.emoji}</div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[var(--gray-900)] dark:text-white truncate">{tx.description}</p>
+                      <p className="text-[10px] text-[var(--gray-400)]">{cat.name} · {formatDate(tx.date)}</p>
+                    </div>
+                  </div>
+                  <span className={cn('text-sm font-semibold tabular-nums ml-3', tx.type === 'income' ? 'text-emerald-600' : 'text-[var(--gray-900)] dark:text-white')}>
+                    {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, profile.currency)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </motion.div>
     </motion.div>
   )
+}
+
+function formatDate(d: string): string {
+  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' }).format(new Date(d))
 }

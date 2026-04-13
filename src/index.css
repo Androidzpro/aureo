@@ -4,39 +4,153 @@
 
 @layer base {
   :root {
+    --flow-brand-50: #EEF2FF;
+    --flow-brand-100: #E0E7FF;
+    --flow-brand-500: #6366F1;
+    --flow-brand-600: #4F46E5;
+
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243 75% 59%;
+    --radius: 0.75rem;
   }
+
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 6.9%;
+    --card-foreground: 210 40% 98%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 243 75% 59%;
   }
 }
 
 @layer base {
   * { @apply border-gray-100 dark:border-gray-800; }
   body {
-    @apply bg-[#FAFAFA] dark:bg-[#0F0F0F] text-[#1A1A1A] dark:text-white;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;
   }
-  ::-webkit-scrollbar { width: 0; height: 0; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+  .dark ::-webkit-scrollbar-thumb { background: #374151; }
 }
 
 @layer components {
-  .btn-secondary { @apply h-9 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-xs; }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold
+           bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25
+           hover:shadow-xl hover:shadow-indigo-500/30 hover:from-indigo-600 hover:to-violet-600
+           active:scale-[0.98] transition-all duration-150
+           disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold
+           bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200
+           border border-gray-200 dark:border-gray-700 shadow-sm
+           hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300
+           active:scale-[0.98] transition-all duration-150
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold
+           bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
+           border border-red-100 dark:border-red-900/30
+           hover:bg-red-100 dark:hover:bg-red-950/50
+           active:scale-[0.98] transition-all duration-150;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-medium
+           text-gray-500 hover:text-gray-700 dark:hover:text-gray-300
+           hover:bg-gray-100 dark:hover:bg-gray-800
+           active:scale-[0.98] transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800
+           shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+  .card-header {
+    @apply flex items-center justify-between px-5 py-4 border-b border-gray-50 dark:border-gray-800;
+  }
+  .card-body {
+    @apply p-5;
+  }
+
+  .input {
+    @apply w-full h-12 px-4 rounded-xl text-sm
+           bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+           text-gray-900 dark:text-gray-50
+           placeholder:text-gray-400 dark:placeholder:text-gray-500
+           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+           dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20
+           transition-all duration-150 outline-none;
+  }
+  .input-lg {
+    @apply w-full h-14 px-5 rounded-xl text-lg font-semibold
+           bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+           text-gray-900 dark:text-gray-50
+           placeholder:text-gray-400
+           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+           transition-all duration-150 outline-none;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold
+           bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400;
+  }
+  .badge-warning {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold
+           bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400;
+  }
+  .badge-danger {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold
+           bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400;
+  }
+
+  .skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg;
+  }
+  .skeleton-circle {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-800 rounded-full;
+  }
 }
 
-/* React Calendar */
-.react-calendar { border: none !important; font-family: 'Inter', sans-serif !important; width: 100% !important; background: transparent !important; }
-.react-calendar__tile--active { background: linear-gradient(135deg, #6366F1, #8B5CF6) !important; border-radius: 12px !important; color: white !important; }
-.react-calendar__tile--now { background: #F0F0F0 !important; border-radius: 12px !important; }
-.dark .react-calendar__tile--now { background: #1A1A1A !important; }
-.react-calendar__navigation button { color: #1A1A1A !important; font-weight: 600 !important; font-size: 14px !important; }
-.dark .react-calendar__navigation button { color: white !important; }
-.react-calendar__month-view__days__day { font-size: 13px !important; padding: 8px 0 !important; }
-.react-calendar__month-view__days__day--weekend { color: #EF4444 !important; }
-.react-calendar__tile { border-radius: 12px !important; }
-abbr[title] { text-decoration: none !important; }
+@layer utilities {
+  .text-display { @apply text-4xl font-bold tracking-tight text-gray-900 dark:text-white; }
+  .text-heading { @apply text-2xl font-bold tracking-tight text-gray-900 dark:text-white; }
+  .text-title { @apply text-lg font-semibold text-gray-900 dark:text-white; }
+  .text-subtitle { @apply text-sm font-medium text-gray-700 dark:text-gray-300; }
+  .text-body { @apply text-sm text-gray-600 dark:text-gray-400; }
+  .text-caption { @apply text-xs text-gray-500 dark:text-gray-500; }
+  .text-micro { @apply text-[10px] font-medium text-gray-400 dark:text-gray-600 uppercase tracking-wider; }
+}

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,25 +16,41 @@ const schema = z.object({
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { register: reg } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [verificationSent, setVerificationSent] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      setVerificationSent(true)
+    }
+  }, [searchParams])
 
   const onSubmit = async (data: { name: string; email: string; password: string }) => {
     try {
-      setIsLoading(true); setError('')
-      await reg(data.name, data.email, data.password)
+      setIsLoading(true); setError(''); setVerificationSent(false)
+      const result = await reg(data.name, data.email, data.password)
+      if (result === 'needsVerification') {
+        setVerificationSent(true)
+        return
+      }
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        // Email verification required by Supabase
-        navigate('/login')
-        setError('Se envió un correo de verificación. Revisa tu bandeja de entrada.')
+        setVerificationSent(true)
         return
       }
       navigate('/onboarding')
     }
-    catch (e: any) { setError(e?.message || 'Error al crear cuenta') }
+    catch (e: any) { 
+      if (e?.message?.includes('ya está registrado')) {
+        setError(e.message)
+      } else {
+        setError(e?.message || 'Error al crear cuenta')
+      }
+    }
     finally { setIsLoading(false) }
   }
 
@@ -61,6 +77,12 @@ export default function RegisterPage() {
             </button>
           </form>
           {error && <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl text-xs text-red-600 text-center">{error}</div>}
+          {verificationSent && (
+            <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+              <p className="text-xs text-emerald-600 text-center font-medium">Revisa tu correo</p>
+              <p className="text-xs text-emerald-500 text-center mt-1">Te enviamos un enlace de verificación. Haz clic en el enlace para activar tu cuenta.</p>
+            </div>
+          )}
         </div>
         <p className="text-center text-xs text-white/60 mt-5">¿Ya tienes cuenta? <Link to="/login" className="text-white font-semibold">Iniciar sesión</Link></p>
       </motion.div>

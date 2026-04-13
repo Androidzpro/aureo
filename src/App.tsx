@@ -17,7 +17,7 @@ import SettingsPage from '@/pages/SettingsPage'
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
     </div>
   )

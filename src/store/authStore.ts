@@ -33,7 +33,15 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Credenciales inválidas' : error.message)
+        if (error) {
+          if (error.message.includes('Email not confirmed')) {
+            throw new Error('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.')
+          }
+          if (error.message.includes('Invalid login') || error.message.includes('Invalid credentials')) {
+            throw new Error('Credenciales inválidas')
+          }
+          throw new Error(error.message)
+        }
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
         if (profile) set({ profile: { ...profile, email }, isAuthenticated: true })
       },
@@ -44,12 +52,21 @@ export const useAuthStore = create<AuthState>()(
           password,
           options: {
             data: { name },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         })
         if (error) throw new Error(error.message === 'User already registered' ? 'Este email ya está registrado' : error.message)
-        if (data.user) {
-          // The trigger handle_new_user() creates the profile automatically
-          // Wait briefly for trigger to execute
+        
+        // If user is created but no session, email confirmation is required
+        // Don't auto-login; let the user check their email
+        if (!data.session && data.user) {
+          // Profile will be created by trigger after email confirmation
+          // We don't set isAuthenticated here
+          // Navigate to register page with verification message
+          return { needsVerification: true }
+        }
+        
+        if (data.session && data.user) {
           await new Promise(resolve => setTimeout(resolve, 500))
           const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
           if (profile) set({ profile: { ...profile, email }, isAuthenticated: true })
@@ -79,23 +96,48 @@ export const useAuthStore = create<AuthState>()(
   )
 )
 
-// Load session on app start
+let _authListenerInitialized = false
+
 export async function loadSession() {
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      console.error('Session error:', error.message)
+    }
+    
     if (session) {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-      if (profile) useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
-    }
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-        if (profile) useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
-      } else if (event === 'SIGNED_OUT') {
-        useAuthStore.getState().setProfile(null)
+      if (profile) {
+        useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
       }
-    })
+    }
+
+    if (!_authListenerInitialized) {
+      _authListenerInitialized = true
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth event:', event)
+        
+        if (event === 'SIGNED_IN' && session) {
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+          if (profile) {
+            useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
+          }
+        } else if (event === 'SIGNED_OUT') {
+          useAuthStore.getState().setProfile(null)
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+          if (profile) {
+            useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
+          }
+        } else if (event === 'USER_UPDATED' && session) {
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+          if (profile) {
+            useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
+          }
+        }
+      })
+    }
   } catch (e) {
     console.error('Failed to load session:', e)
   } finally {
