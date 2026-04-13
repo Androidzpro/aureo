@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { supabase, getCat, formatCurrency, CATEGORIES, analyzeFinances } from '@/lib/data'
+import { supabase, getCat, formatCurrency, CATS, analyzeFinances } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, CartesianGrid } from 'recharts'
 import { Download, Lightbulb } from 'lucide-react'

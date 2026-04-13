@@ -20,7 +20,8 @@
       "Bash(curl *)",
       "Bash(timeout *)",
       "Bash(node *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(git config *)"
     ]
   },
   "$version": 3

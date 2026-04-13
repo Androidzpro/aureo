@@ -5,7 +5,7 @@ import Confetti from 'react-confetti'
 import { Plus, ArrowUpRight, ArrowDownRight, X, Calendar, Lightbulb, ChevronRight, Trophy, TrendingUp, CreditCard, Target, Star, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
-import { formatCurrency, formatDate, analyzeFinances, TIPS, playSound, getCat, cn, checkAchievements, ACHIEVEMENTS } from '@/lib/data'
+import { formatCurrency, formatDate, analyzeFinances, TIPS, playSound, getCat, cn, checkAchievements, ACHIEVEMENTS, CATS } from '@/lib/data'
 
 export default function HomePage() {
   const { user } = useAuthStore()
