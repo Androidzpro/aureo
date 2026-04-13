@@ -3,12 +3,12 @@ import { persist } from 'zustand/middleware'
 import { supabase } from '@/lib/data'
 import bcrypt from 'bcryptjs'
 
-interface User { id: string; email: string; name: string; created_at: string }
+interface Profile { id: string; email: string; full_name: string; created_at: string }
 
 interface AuthState {
-  user: User | null
+  profile: Profile | null
   isAuthenticated: boolean
-  setUser: (u: User | null) => void
+  setProfile: (p: Profile | null) => void
   logout: () => void
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
@@ -17,26 +17,34 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: null,
+      profile: null,
       isAuthenticated: false,
-      setUser: (u) => set({ user: u, isAuthenticated: !!u }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      setProfile: (p) => set({ profile: p, isAuthenticated: !!p }),
+      logout: () => set({ profile: null, isAuthenticated: false }),
+
       login: async (email, password) => {
-        const { data: users, error } = await supabase.from('users').select('*').eq('email', email).single()
+        const { data: users, error } = await supabase.from('profiles').select('*').eq('email', email).single()
         if (error || !users) throw new Error('Credenciales inválidas')
-        const isValid = await bcrypt.compare(password, users.password)
-        if (!isValid) throw new Error('Credenciales inválidas')
-        set({ user: { id: users.id, email: users.email, name: users.name, created_at: users.created_at }, isAuthenticated: true })
+        // Check password stored in custom auth or legacy users table
+        const { data: legacyUser } = await supabase.from('users').select('*').eq('email', email).single()
+        if (legacyUser) {
+          const isValid = await bcrypt.compare(password, legacyUser.password)
+          if (!isValid) throw new Error('Credenciales inválidas')
+          set({ profile: { id: legacyUser.id, email: legacyUser.email, full_name: legacyUser.name, created_at: legacyUser.created_at }, isAuthenticated: true })
+          return
+        }
+        throw new Error('Credenciales inválidas')
       },
+
       register: async (name, email, password) => {
         const { data: existing } = await supabase.from('users').select('id').eq('email', email).single()
         if (existing) throw new Error('Este email ya está registrado')
         const hashed = await bcrypt.hash(password, 10)
         const { data, error } = await supabase.from('users').insert([{ email, name, password: hashed }]).select().single()
         if (error) throw new Error(error.message)
-        set({ user: { id: data.id, email: data.email, name: data.name, created_at: data.created_at }, isAuthenticated: true })
+        set({ profile: { id: data.id, email: data.email, full_name: data.name, created_at: data.created_at }, isAuthenticated: true })
       },
     }),
-    { name: 'flowfin-auth' }
+    { name: 'flowfin-auth-v3' }
   )
 )
