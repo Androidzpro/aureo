@@ -16,8 +16,18 @@ import ReportsPage from '@/pages/ReportsPage'
 import SettingsPage from '@/pages/SettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isLoading = useAuthStore(s => s.isLoading)
   const auth = useAuthStore(s => s.isAuthenticated)
   const onboarded = useAuthStore(s => s.profile?.onboarded)
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   if (!auth) return <Navigate to="/login" replace />
   if (!onboarded) return <Navigate to="/onboarding" replace />
   return <>{children}</>

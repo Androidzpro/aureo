@@ -17,7 +17,9 @@ interface Profile {
 interface AuthState {
   profile: Profile | null
   isAuthenticated: boolean
+  isLoading: boolean
   setProfile: (p: Profile | null) => void
+  setLoading: (loading: boolean) => void
   logout: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
@@ -31,7 +33,9 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       profile: null,
       isAuthenticated: false,
+      isLoading: true,
       setProfile: (p) => set({ profile: p, isAuthenticated: !!p }),
+      setLoading: (loading) => set({ isLoading: loading }),
 
       logout: async () => {
         await supabase.auth.signOut()
@@ -46,11 +50,20 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (name, email, password) => {
-        const { data, error } = await supabase.auth.signUp({ email, password })
-        if (error) throw new Error(error.message)
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name },
+          },
+        })
+        if (error) throw new Error(error.message === 'User already registered' ? 'Este email ya está registrado' : error.message)
         if (data.user) {
-          await supabase.from('profiles').insert([{ id: data.user.id, name, currency: 'MXN', onboarded: false }])
-          set({ profile: { id: data.user.id, name, email, currency: 'MXN', monthly_income: null, income_type: 'fixed', has_debts: false, goal_type: 'save', onboarded: false }, isAuthenticated: true })
+          // The trigger handle_new_user() creates the profile automatically
+          // Wait briefly for trigger to execute
+          await new Promise(resolve => setTimeout(resolve, 500))
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+          if (profile) set({ profile: { ...profile, email }, isAuthenticated: true })
         }
       },
 
@@ -79,18 +92,24 @@ export const useAuthStore = create<AuthState>()(
 
 // Load session on app start
 export async function loadSession() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) {
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-    if (profile) useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
-  }
-  // Listen for auth changes
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
       if (profile) useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
-    } else if (event === 'SIGNED_OUT') {
-      useAuthStore.getState().setProfile(null)
     }
-  })
+    // Listen for auth changes
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+        if (profile) useAuthStore.getState().setProfile({ ...profile, email: session.user.email || '' })
+      } else if (event === 'SIGNED_OUT') {
+        useAuthStore.getState().setProfile(null)
+      }
+    })
+  } catch (e) {
+    console.error('Failed to load session:', e)
+  } finally {
+    useAuthStore.getState().setLoading(false)
+  }
 }

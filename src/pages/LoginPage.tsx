@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { supabase } from '@/lib/data'
 import { useAuth } from '@/contexts/AuthContext'
 
 const schema = z.object({
@@ -16,12 +17,27 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showReset, setShowReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async (data: { email: string; password: string }) => {
     try { setIsLoading(true); setError(''); await login(data.email, data.password); navigate('/') }
     catch (e: any) { setError(e?.message || 'Error al ingresar') }
     finally { setIsLoading(false) }
+  }
+
+  const handleReset = async () => {
+    if (!resetEmail) return
+    setResetLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) { setError(error.message) }
+    else { setResetSent(true) }
+    setResetLoading(false)
   }
 
   return (
@@ -57,11 +73,42 @@ export default function LoginPage() {
             </button>
           </form>
           {error && <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl text-xs text-red-600 text-center">{error}</div>}
-          <p className="text-center text-xs text-gray-500 mt-5">
+
+          {/* Forgot password link */}
+          <button onClick={() => setShowReset(true)} className="w-full text-center text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-3 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </button>
+
+          <p className="text-center text-xs text-gray-500 mt-3">
             ¿No tienes cuenta? <Link to="/register" className="text-indigo-600 dark:text-indigo-400 font-semibold">Crear cuenta gratis</Link>
           </p>
         </div>
       </motion.div>
+
+      {/* Reset Password Modal */}
+      {showReset && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={() => { setShowReset(false); setResetSent(false) }}>
+          <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Recuperar contraseña</h3>
+            <p className="text-xs text-gray-500 mb-4">Te enviaremos un correo para restablecerla</p>
+            {resetSent ? (
+              <div className="text-center py-4">
+                <p className="text-2xl mb-2">📧</p>
+                <p className="text-sm font-medium text-emerald-600">Correo enviado</p>
+                <p className="text-xs text-gray-400 mt-1">Revisa tu bandeja de entrada</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <input value={resetEmail} onChange={e => setResetEmail(e.target.value)} type="email" placeholder="tu@email.com" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500" />
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowReset(false); setResetSent(false) }} className="flex-1 h-11 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-xs">Cancelar</button>
+                  <button onClick={handleReset} disabled={resetLoading} className="flex-1 h-11 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl text-xs disabled:opacity-50">{resetLoading ? 'Enviando...' : 'Enviar'}</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

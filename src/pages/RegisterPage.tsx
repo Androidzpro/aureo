@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { supabase } from '@/lib/data'
 import { useAuth } from '@/contexts/AuthContext'
 
 const schema = z.object({
@@ -21,7 +22,18 @@ export default function RegisterPage() {
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async (data: { name: string; email: string; password: string }) => {
-    try { setIsLoading(true); setError(''); await reg(data.name, data.email, data.password); navigate('/onboarding') }
+    try {
+      setIsLoading(true); setError('')
+      await reg(data.name, data.email, data.password)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        // Email verification required by Supabase
+        navigate('/login')
+        setError('Se envió un correo de verificación. Revisa tu bandeja de entrada.')
+        return
+      }
+      navigate('/onboarding')
+    }
     catch (e: any) { setError(e?.message || 'Error al crear cuenta') }
     finally { setIsLoading(false) }
   }
