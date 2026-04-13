@@ -25,16 +25,16 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-8 h-8 mx-auto mb-4"><img src="/logo.svg" alt="" className="w-full h-full" /></div>
-          <h1 className="text-lg font-semibold text-[#1A1A1A]">Iniciar sesión</h1>
-          <p className="text-sm text-[#707070] mt-1">Ingresa tus credenciales para continuar</p>
+          <div className="w-7 h-7 mx-auto mb-4"><img src="/logo.svg" alt="" className="w-full h-full" /></div>
+          <h1 className="text-base font-semibold text-[#1A1A1A]">Iniciar sesión</h1>
+          <p className="text-xs text-[#707070] mt-1">Ingresa tus credenciales para continuar</p>
         </div>
         <div className="border border-[#EAEAEA] rounded-lg p-5">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div><label className="text-xs font-medium text-[#5C5C5C] mb-1.5 block">Correo electrónico</label>
+            <div><label className="text-[10px] font-medium text-[#707070] uppercase tracking-[0.04em] mb-1.5 block">Correo electrónico</label>
               <input type="email" placeholder="tu@email.com" className="input" {...register('email')} />
               {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}</div>
-            <div><label className="text-xs font-medium text-[#5C5C5C] mb-1.5 block">Contraseña</label>
+            <div><label className="text-[10px] font-medium text-[#707070] uppercase tracking-[0.04em] mb-1.5 block">Contraseña</label>
               <input type="password" placeholder="••••••••" className="input" {...register('password')} />
               {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}</div>
             <button type="submit" disabled={isLoading} className="w-full btn-primary h-9">

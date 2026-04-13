@@ -21,7 +21,9 @@
       "Bash(timeout *)",
       "Bash(node *)",
       "Bash(powershell *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git stash)",
+      "Bash(git checkout *)"
     ]
   },
   "$version": 3

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { supabase, getCat, formatCurrency, analyzeFinances, cn } from '@/lib/data'
+import { supabase, getCat, formatCurrency, calcHealthScore, cn } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid } from 'recharts'
 import { Download } from 'lucide-react'
@@ -16,7 +16,7 @@ export default function ReportsPage() {
     supabase.from('transactions').select('*').eq('user_id', profile.id).order('date', { ascending: false }).then(({ data }) => { if (data) setTxs(data); setLoading(false) })
   }, [profile?.id])
 
-  const analysis = useMemo(() => analyzeFinances(txs), [txs])
+  const score = calcHealthScore(txs)
   const monthlyData = useMemo(() => {
     const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
     const now = new Date(); const data = []
@@ -35,6 +35,10 @@ export default function ReportsPage() {
     return Object.entries(map).sort((a,b) => b[1] - a[1]).slice(0, 8).map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }))
   }, [txs])
 
+  const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0
+
   const exportCSV = () => {
     const rows = txs.map(t => [new Date(t.date).toLocaleDateString('es-MX'), t.description, t.type === 'income' ? 'Ingreso' : 'Gasto', getCat(t.category_id).name, t.amount].join(','))
     const blob = new Blob(['\ufeffFecha,Descripcion,Tipo,Categoria,Monto\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })
@@ -46,7 +50,7 @@ export default function ReportsPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <div><h1 className="page-title">Reportes</h1><p className="page-subtitle">Análisis de tus finanzas</p></div>
+        <div><h1 className="text-xl font-semibold text-[#1A1A1A] tracking-tight">Reportes</h1><p className="text-xs text-[#707070] mt-0.5">Análisis de tus finanzas</p></div>
         <button onClick={exportCSV} className="btn-secondary flex items-center gap-1.5"><Download size={14} /> Exportar</button>
       </div>
 
@@ -56,11 +60,11 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="kpi"><p className="kpi-label">Ingresos</p><p className="kpi-value text-emerald-600">{formatCurrency(analysis.income)}</p></div>
-        <div className="kpi"><p className="kpi-label">Gastos</p><p className="kpi-value text-red-600">{formatCurrency(analysis.expense)}</p></div>
-        <div className="kpi"><p className="kpi-label">Tasa de ahorro</p><p className="kpi-value text-[#1A1A1A]">{analysis.savingsRate.toFixed(1)}%</p></div>
-        <div className="kpi"><p className="kpi-label">Score</p><p className={cn('kpi-value', analysis.score >= 60 ? 'text-[#1A1A1A]' : 'text-red-600')}>{analysis.score}%</p></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="card p-4"><p className="text-[10px] font-medium text-[#A0A0A0] uppercase tracking-[0.04em] mb-1">Ingresos</p><p className="text-lg font-semibold text-emerald-600">{formatCurrency(income)}</p></div>
+        <div className="card p-4"><p className="text-[10px] font-medium text-[#A0A0A0] uppercase tracking-[0.04em] mb-1">Gastos</p><p className="text-lg font-semibold text-red-600">{formatCurrency(expense)}</p></div>
+        <div className="card p-4"><p className="text-[10px] font-medium text-[#A0A0A0] uppercase tracking-[0.04em] mb-1">Ahorro</p><p className="text-lg font-semibold text-[#1A1A1A]">{savingsRate.toFixed(1)}%</p></div>
+        <div className="card p-4"><p className="text-[10px] font-medium text-[#A0A0A0] uppercase tracking-[0.04em] mb-1">Score</p><p className={cn('text-lg font-semibold', score >= 60 ? 'text-[#1A1A1A]' : 'text-red-600')}>{score}%</p></div>
       </div>
 
       <div className="card p-6">
