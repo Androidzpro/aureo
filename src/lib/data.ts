@@ -254,5 +254,22 @@ function getAudioCtx(): AudioContext {
 }
 
 export const playSound = (type: 'success' | 'delete' | 'click') => {
-  import('./sounds').then(m => m.playSound(type))
+  try {
+    const ctx = getAudioCtx()
+    const o = ctx.createOscillator(), g = ctx.createGain()
+    o.connect(g); g.connect(ctx.destination)
+    if (type === 'success') {
+      o.frequency.setValueAtTime(523, ctx.currentTime); o.frequency.setValueAtTime(659, ctx.currentTime + 0.1)
+      g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25)
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.25)
+    } else if (type === 'delete') {
+      o.type = 'sine'; o.frequency.setValueAtTime(400, ctx.currentTime); o.frequency.setValueAtTime(300, ctx.currentTime + 0.1)
+      g.gain.setValueAtTime(0.06, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2)
+    } else {
+      o.frequency.setValueAtTime(800, ctx.currentTime)
+      g.gain.setValueAtTime(0.03, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.04)
+    }
+  } catch {}
 }
