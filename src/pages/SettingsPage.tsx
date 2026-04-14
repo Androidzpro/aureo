@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, LogOut, Key, Bell, Moon, Palette, ChevronRight, X, Check, Sun } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/UI'
 
 export default function SettingsPage() {
   const { profile, logout, updatePassword, updateCurrency } = useAuthStore()
+  const [dark, setDark] = useState(() => localStorage.getItem('flowfin-dark') === 'true')
   const [showChangePass, setShowChangePass] = useState(false)
   const [passForm, setPassForm] = useState({ current: '', newPass: '', confirm: '' })
   const [passError, setPassError] = useState('')
@@ -15,11 +16,16 @@ export default function SettingsPage() {
   const [showCurrency, setShowCurrency] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem('flowfin-dark', String(dark))
+  }, [dark])
+
   const handleChangePassword = async () => {
     try {
       setPassLoading(true); setPassError(''); setPassSuccess('')
       if (passForm.newPass !== passForm.confirm) { setPassError('Las contraseñas no coinciden'); return }
-      if (passForm.newPass.length < 6) { setPassError('Mínimo 6 caracteres'); return }
+      if (passForm.newPass.length < 8) { setPassError('Mínimo 8 caracteres'); return }
       // With Supabase Auth, we just update the password directly (no need for current)
       await updatePassword(passForm.newPass)
       setPassSuccess('Contraseña actualizada correctamente')
@@ -59,8 +65,10 @@ export default function SettingsPage() {
           <ChevronRight size={16} className="text-gray-300" />
         </button>
         <div className="flex items-center justify-between px-4 py-3.5">
-          <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><Moon size={15} className="text-gray-500" /></div><div><p className="text-xs font-medium text-gray-900 dark:text-white">Modo oscuro</p><p className="text-[10px] text-gray-400">Cambiar tema de la app</p></div></div>
-          <ThemeToggle />
+          <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">{dark ? <Sun size={15} className="text-amber-500" /> : <Moon size={15} className="text-gray-500" />}</div><div><p className="text-xs font-medium text-gray-900 dark:text-white">Modo oscuro</p><p className="text-[10px] text-gray-400">Cambiar tema de la app</p></div></div>
+          <button onClick={() => setDark(!dark)} className={cn('relative w-11 h-6 rounded-full transition-colors', dark ? 'bg-blue-600' : 'bg-gray-200')}>
+            <div className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform', dark ? 'translate-x-[22px]' : 'translate-x-0.5')} />
+          </button>
         </div>
         {[
           { icon: Bell, label: 'Notificaciones', desc: 'Alertas y recordatorios' },
@@ -124,17 +132,5 @@ export default function SettingsPage() {
 
       <ConfirmDialog open={confirmLogout} title="Cerrar sesión" message="¿Estás seguro?" confirmLabel="Salir" onConfirm={async () => { playSound('click'); await logout() }} onCancel={() => setConfirmLogout(false)} />
     </motion.div>
-  )
-}
-
-function ThemeToggle() {
-  const [dark, setDark] = useState(() => localStorage.getItem('flowfin-dark') === 'true')
-  return (
-    <button onClick={() => { setDark(!dark); localStorage.setItem('flowfin-dark', String(!dark)); document.documentElement.classList.toggle('dark', !dark) }}
-      className="relative w-11 h-6 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors">
-      <div className={cn('absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform', dark ? 'translate-x-5' : '')}>
-        {dark ? <Moon size={10} className="text-indigo-600" /> : <Sun size={10} className="text-amber-500" />}
-      </div>
-    </button>
   )
 }

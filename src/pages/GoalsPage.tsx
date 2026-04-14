@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, DollarSign, Trash2, Trophy, Pencil } from 'lucide-react'
+import { Plus, X, DollarSign, Trash2, Trophy, Pencil, PartyPopper, CheckCircle2 } from 'lucide-react'
 import { supabase } from '@/lib/data'
 import { useAuthStore } from '@/store/authStore'
 import { formatCurrency, playSound, cn } from '@/lib/data'
@@ -20,6 +20,7 @@ export default function GoalsPage() {
   const [form, setForm] = useState({ name: '', target: '', current: '0', emoji: '🎯' })
   const [cForm, setCForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0] })
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [goalSaved, setGoalSaved] = useState(false)
 
   useEffect(() => { load() }, [profile?.id])
 
@@ -31,17 +32,24 @@ export default function GoalsPage() {
   }
 
   const openAdd = () => { setForm({ name: '', target: '', current: '0', emoji: '🎯' }); setEditing(null); setShowModal(true) }
-  const openEdit = (g: Goal) => { setForm({ name: g.name, target: String(g.target_amount), current: String(g.current_amount), emoji: g.emoji }); setEditing(g); setShowModal(true) }
+  const openEdit = (g: SavingsGoal) => { setForm({ name: g.name, target: String(g.target_amount), current: String(g.current_amount), emoji: g.emoji }); setEditing(g); setShowModal(true) }
 
   const saveGoal = async () => {
     if (!profile?.id || !form.name || !form.target) return
     const data = { user_id: profile.id, name: form.name, target_amount: parseFloat(form.target), current_amount: parseFloat(form.current) || 0, emoji: form.emoji, color: COLORS[Math.floor(Math.random() * COLORS.length)] }
-    if (editing) {
-      await supabase.from('savings_goals').update(data).eq('id', editing.id)
-    } else {
-      await supabase.from('savings_goals').insert([data])
-    }
-    setShowModal(false); setEditing(null); load()
+    try {
+      if (editing) {
+        await supabase.from('savings_goals').update(data).eq('id', editing.id)
+      } else {
+        await supabase.from('savings_goals').insert([data])
+      }
+      playSound('success')
+      setGoalSaved(true)
+      setTimeout(() => setGoalSaved(false), 2500)
+      setShowModal(false)
+      setEditing(null)
+      load()
+    } catch { /* silent */ }
   }
 
   const contribute = async () => {
@@ -49,9 +57,20 @@ export default function GoalsPage() {
     const amount = parseFloat(cForm.amount)
     if (amount <= 0) return
     const newAmount = selected.current_amount + amount
-    await supabase.from('savings_goals').update({ current_amount: newAmount }).eq('id', selected.id)
-    await supabase.from('goal_contributions').insert([{ goal_id: selected.id, user_id: profile!.id, amount, date: new Date(cForm.date).toISOString() }])
-    setShowContrib(false); setCForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setSelected(null); load()
+    const reached = newAmount >= selected.target_amount
+    try {
+      await supabase.from('savings_goals').update({ current_amount: newAmount }).eq('id', selected.id)
+      await supabase.from('goal_contributions').insert([{ goal_id: selected.id, user_id: profile!.id, amount, date: new Date(cForm.date).toISOString() }])
+      playSound('success')
+      if (reached) {
+        setGoalSaved(true)
+        setTimeout(() => setGoalSaved(false), 3000)
+      }
+      setShowContrib(false)
+      setCForm({ amount: '', date: new Date().toISOString().split('T')[0] })
+      setSelected(null)
+      load()
+    } catch { /* silent */ }
   }
 
   const totalSaved = goals.reduce((s, g) => s + g.current_amount, 0)
@@ -60,12 +79,12 @@ export default function GoalsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-lg font-bold text-gray-900 dark:text-white">Metas de Ahorro</h1><p className="text-xs text-gray-400">Planifica y alcanza tus objetivos</p></div>
-        <button onClick={openAdd} className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-300/30 active:scale-90 transition-transform"><Plus size={18} className="text-white" /></button>
+        <div><h1 className="text-lg font-bold text-gray-900 dark:text-white">Metas de ahorro</h1><p className="text-xs text-gray-400">Ahorra para lo que importa</p></div>
+        <button onClick={openAdd} className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-600/25 active:scale-90 transition-transform"><Plus size={18} className="text-white" /></button>
       </div>
 
       {goals.length > 0 && (
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 text-white">
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-500 rounded-2xl p-4 text-white">
           <p className="text-white/60 text-[10px] uppercase">Total ahorrado</p>
           <p className="text-xl font-bold">{formatCurrency(totalSaved, profile?.currency)}<span className="text-sm font-normal text-white/60 ml-1">de {formatCurrency(totalTarget, profile?.currency)}</span></p>
           <div className="w-full bg-white/20 rounded-full h-1.5 mt-2"><div className="h-1.5 rounded-full bg-white/80 transition-all" style={{ width: `${totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0}%` }} /></div>
@@ -98,6 +117,21 @@ export default function GoalsPage() {
             )
           })}
 
+      {/* Success celebration */}
+      <AnimatePresence>
+        {goalSaved && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[70] flex items-center justify-center p-4" onClick={() => setGoalSaved(false)}>
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="bg-white dark:bg-gray-900 rounded-2xl p-8 text-center max-w-sm">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}>
+                <PartyPopper size={48} className="text-emerald-500 mx-auto mb-3" />
+              </motion.div>
+              <p className="text-lg font-bold text-gray-900 dark:text-white mb-2">¡Meta alcanzada! 🎉</p>
+              <p className="text-sm text-gray-500">Cada paso cuenta. Sigue así y lograrás todo lo que te propongas.</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {showModal && (
@@ -114,7 +148,7 @@ export default function GoalsPage() {
                     <button key={e} onClick={() => setForm({...form,emoji:e})} className={cn('w-9 h-9 rounded-lg text-lg', form.emoji === e ? 'bg-indigo-50 dark:bg-indigo-900/30 ring-2 ring-indigo-500' : 'bg-gray-50 dark:bg-gray-800')}>{e}</button>
                   ))}</div>
                 </div>
-                <button onClick={saveGoal} className="w-full h-11 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl text-xs">{editing ? 'Actualizar' : 'Crear'}</button>
+                <button onClick={saveGoal} className="w-full h-11 bg-emerald-600 text-white font-medium rounded-xl text-xs shadow-lg shadow-emerald-600/25 active:scale-[0.98] transition-all">{editing ? 'Actualizar' : 'Crear'}</button>
               </div>
             </motion.div>
           </motion.div>
@@ -131,7 +165,7 @@ export default function GoalsPage() {
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-center"><p className="text-[10px] text-gray-400">Actual</p><p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(selected.current_amount, profile?.currency)}</p></div>
                 <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Monto ($)</label><input type="number" value={cForm.amount} onChange={e => setCForm({...cForm,amount:e.target.value})} placeholder="0" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500" /></div>
                 <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Fecha</label><input type="date" value={cForm.date} onChange={e => setCForm({...cForm,date:e.target.value})} className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white" /></div>
-                <button onClick={contribute} className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl text-xs">Aportar</button>
+                <button onClick={contribute} className="w-full h-11 bg-emerald-600 text-white font-medium rounded-xl text-xs shadow-lg shadow-emerald-600/25 active:scale-[0.98] transition-all">Aportar</button>
               </div>
             </motion.div>
           </motion.div>

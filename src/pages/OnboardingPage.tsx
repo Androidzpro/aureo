@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { CURRENCIES, cn } from '@/lib/data'
+import { CURRENCIES, cn, formatCurrency } from '@/lib/data'
 import { useNavigate } from 'react-router-dom'
 
 const steps = ['Bienvenida', 'Perfil', 'Finanzas']
@@ -344,10 +344,4 @@ export default function OnboardingPage() {
       </motion.div>
     </div>
   )
-}
-
-// Utility helpers
-function cn(...c: (string | boolean | undefined | null)[]) { return c.filter(Boolean).join(' ') }
-function formatCurrency(n: number, currency = 'MXN'): string {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)
 }

@@ -1,17 +1,4 @@
-cd C:\xampp\htdocs\fortuna\server
-
-# Generar Prisma Client
-npx prisma generate
-
-# Ejecutar migraciones a Supabase
-npx prisma migrate dev --name init
-
-# Si pide "reset database", di que SÍ (yes)
-
-cd ..
-
-# Iniciar la aplicación
-npm run dev# Dependencies
+# Dependencies
 node_modules/
 .pnp
 .pnp.js
@@ -70,6 +57,3 @@ prisma/migrations/
 
 # Misc
 .turbo
-.vercel
-
-.vercel

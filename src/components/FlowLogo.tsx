@@ -15,10 +15,8 @@ export function FlowLogo({ size = 28, className, variant = 'full', theme = 'dark
     return (
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={className}>
         <rect width="32" height="32" rx="8" fill="url(#logo-gradient)" />
-        {/* F with flow lines suggesting money flow */}
         <path d="M9 10h9a3 3 0 0 1 0 6H9" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
         <path d="M9 16h7a3 3 0 0 1 0 6H9" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-        {/* Upward arrow suggesting growth */}
         <path d="M20 14l2-2m0 0l2-2m-2 2h-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
         <defs>
           <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
@@ -44,11 +42,9 @@ export function FlowLogo({ size = 28, className, variant = 'full', theme = 'dark
           </linearGradient>
         </defs>
       </svg>
-      {variant !== 'icon' && (
-        <span className={cn('text-lg font-bold tracking-tight', textColor)}>
-          Flow<span className="text-emerald-600">Fin</span>
-        </span>
-      )}
+      <span className={cn('text-lg font-bold tracking-tight', textColor)}>
+        Flow<span className="text-emerald-600">Fin</span>
+      </span>
     </div>
   )
 }

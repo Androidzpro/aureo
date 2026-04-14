@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { supabase, getCat, formatCurrency, calcScore, cn } from '@/lib/data'
+import { supabase, getCat, formatCurrency, cn } from '@/lib/data'
+import { calcFlowScore } from '@/lib/flowScore'
 import { useAuthStore } from '@/store/authStore'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid } from 'recharts'
 import { Download } from 'lucide-react'
@@ -16,7 +17,7 @@ export default function ReportsPage() {
     supabase.from('transactions').select('*').eq('user_id', profile.id).order('date', { ascending: false }).then(({ data }) => { if (data) setTxs(data); setLoading(false) })
   }, [profile?.id])
 
-  const score = calcScore(txs)
+  const scoreResult = calcFlowScore(txs)
   const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0
@@ -72,7 +73,7 @@ export default function ReportsPage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Ingresos</p><p className="text-base font-bold text-emerald-600">{formatCurrency(income, profile?.currency)}</p></div>
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Gastos</p><p className="text-base font-bold text-red-600">{formatCurrency(expense, profile?.currency)}</p></div>
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Ahorro</p><p className="text-base font-bold text-gray-900 dark:text-white">{savingsRate.toFixed(1)}%</p></div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">Score</p><p className={cn('text-base font-bold', score >= 60 ? 'text-gray-900 dark:text-white' : 'text-red-600')}>{score}%</p></div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3"><p className="text-[10px] text-gray-400 uppercase">FlowScore</p><p className={cn('text-base font-bold', scoreResult.score >= 60 ? 'text-emerald-600' : 'text-red-600')}>{scoreResult.score}</p></div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">

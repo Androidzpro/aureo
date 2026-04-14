@@ -23,7 +23,8 @@
       "Bash(powershell *)",
       "Bash(git config *)",
       "Bash(git stash)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(npm run *)"
     ]
   },
   "$version": 3

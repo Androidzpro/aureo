@@ -1,11 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Category } from '@/types'
 
-// Supabase config
-const SUPABASE_URL = 'https://ibgmvprphhdtxnlexkgz.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliZ212cHJwaGhkdHhubGV4a2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzAyMTksImV4cCI6MjA5MTQwNjIxOX0.wDi6SST4rxDSfwNGj9pv4Ks4UD14bQEB4RdC6YMT2Aw'
+// Supabase config - loaded from environment variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Missing Supabase configuration. Create a .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  )
+}
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+  },
+})
 
 // ===== MONEDAS =====
 export const CURRENCIES: Record<string, { symbol: string; code: string; locale: string }> = {
@@ -241,22 +254,5 @@ function getAudioCtx(): AudioContext {
 }
 
 export const playSound = (type: 'success' | 'delete' | 'click') => {
-  try {
-    const ctx = getAudioCtx()
-    const o = ctx.createOscillator(), g = ctx.createGain()
-    o.connect(g); g.connect(ctx.destination)
-    if (type === 'success') {
-      o.frequency.setValueAtTime(523, ctx.currentTime); o.frequency.setValueAtTime(659, ctx.currentTime + 0.1)
-      g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25)
-      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.25)
-    } else if (type === 'delete') {
-      o.type = 'sine'; o.frequency.setValueAtTime(400, ctx.currentTime); o.frequency.setValueAtTime(300, ctx.currentTime + 0.1)
-      g.gain.setValueAtTime(0.06, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
-      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2)
-    } else {
-      o.frequency.setValueAtTime(800, ctx.currentTime)
-      g.gain.setValueAtTime(0.03, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
-      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.04)
-    }
-  } catch {}
+  import('./sounds').then(m => m.playSound(type))
 }

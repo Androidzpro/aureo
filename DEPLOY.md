@@ -1,159 +1,333 @@
-# 🚀 Guía de Despliegue - Aureo
+# 🚀 Guía de Despliegue - FlowFin
 
 ## Stack de Producción
 
-- **Frontend:** Vercel → `https://aureo.vercel.app`
-- **Backend:** Render → `https://aureo.onrender.com`
+- **Frontend:** Vercel → `https://fortuna-zeta-seven.vercel.app`
+- **Auth:** Supabase Auth (email + password)
+- **Email:** Brevo SMTP (vía Supabase)
 - **Base de datos:** Supabase → PostgreSQL gratuito (500MB)
 
 ---
 
-## 📋 PASO 1: Subir a GitHub
+## 🔐 PASO 1: Configurar Supabase Auth
 
-```bash
-# Inicializa git
-git init
+### 1.1 Ir al Dashboard de Supabase
+- Ve a https://supabase.com/dashboard
+- Selecciona tu proyecto: `ibgmvprphhdtxnlexkgz`
 
-# Agrega todos los archivos
-git add .
+### 1.2 Configurar Email Auth
+1. Ve a **Authentication → Providers → Email**
+2. Asegúrate que esté **Enabled**
+3. Configura:
 
-# Crea .env en la raíz con tus credenciales
-# (ya está en .gitignore, NO se sube a GitHub)
+| Campo | Valor |
+|-------|-------|
+| **Enable Email Auth** | ✅ ON |
+| **Enable email confirmations** | ✅ ON (requiere confirmación) |
+| **Secure email change** | ✅ ON |
+| **Double confirm** | ❌ OFF (solo una confirmación) |
 
-# Primer commit
-git commit -m "🚀 Initial commit - Aureo Financial Management"
+### 1.3 Configurar URLs de redirección
+1. Ve a **Authentication → URL Configuration**
+2. Configura:
 
-# Crea el repo en GitHub y súbelo
-git remote add origin https://github.com/TU-USUARIO/aureo.git
-git branch -M main
-git push -u origin main
+| Campo | Valor |
+|-------|-------|
+| **Site URL** | `https://fortuna-zeta-seven.vercel.app` |
+| **Redirect URLs** | `https://fortuna-zeta-seven.vercel.app/**` |
+
+> ⚠️ **IMPORTANTE:** El patrón `/**` permite cualquier ruta en tu dominio. Sin esto, los links de confirmación y recuperación fallarán con `access_denied`.
+
+### 1.4 Configurar el template de emails
+1. Ve a **Authentication → Email Templates**
+2. Para cada template (**Confirm signup**, **Reset password**, etc.):
+
+**Template: Confirm signup**
+- Subject: `Confirma tu cuenta en FlowFin`
+- Body:
+```html
+<h2>¡Bienvenido a FlowFin! 💸</h2>
+<p>Haz clic en el botón para confirmar tu correo y activar tu cuenta:</p>
+<p><a href="{{ .ConfirmationURL }}">Confirmar mi cuenta</a></p>
+<p>Si no creaste esta cuenta, ignora este correo.</p>
+<p>El enlace expira en 24 horas.</p>
+```
+
+**Template: Reset password**
+- Subject: `Restablece tu contraseña de FlowFin`
+- Body:
+```html
+<h2>Restablecer contraseña 🔒</h2>
+<p>Recibimos una solicitud para restablecer tu contraseña. Haz clic abajo:</p>
+<p><a href="{{ .ConfirmationURL }}">Restablecer contraseña</a></p>
+<p>Si no solicitaste esto, ignora este correo. Tu contraseña seguirá igual.</p>
+<p>El enlace expira en 1 hora.</p>
 ```
 
 ---
 
-## 🗄️ PASO 2: Configurar Supabase (ya lo tienes)
+## 📧 PASO 2: Configurar Brevo SMTP
 
-Tu proyecto Supabase está listo. Solo necesitas:
+### 2.1 Crear cuenta en Brevo
+1. Ve a https://www.brevo.com/
+2. Crea una cuenta gratuita (hasta 300 emails/día gratis)
+3. Verifica tu dominio (recomendado) o usa el email por defecto
 
-1. Ir a **Settings > Database**
-2. Copiar la **Connection string** (modo URI)
-3. La usarás en Render (Paso 3)
+### 2.2 Obtener credenciales SMTP
+1. En Brevo, ve a **SMTP & API → SMTP**
+2. Encuentra las credenciales:
 
-### ⚠️ IMPORTANTE: Connection Pooling
+| Campo | Ejemplo |
+|-------|---------|
+| **SMTP Server** | `smtp-relay.brevo.com` |
+| **Port** | `587` (TLS) o `465` (SSL) |
+| **Login** | Tu email de Brevo |
+| **Password** | Tu contraseña SMTP (no la de tu cuenta) |
 
-Para Render, usa el **Connection Pooler** (puerto 6543):
-
-1. En **Settings > Database > Connection pooling**
-2. Copia el **Host** del pooler
-3. La URL se ve así:
-   ```
-   postgresql://postgres.[project-ref]:[password]@[pooler-host]:6543/postgres?sslmode=require
-   ```
-
----
-
-## 🔧 PASO 3: Desplegar Backend en Render
-
-1. Ve a https://render.com
-2. **Sign in** con GitHub
-3. **New +** → **Web Service**
-4. Conecta tu repo `aureo`
-5. Configura:
+### 2.3 Configurar SMTP en Supabase
+1. Ve a **Settings → Email** (o **Authentication → Email Settings**)
+2. Sección **SMTP Settings**
+3. Selecciona **Custom SMTP**
+4. Configura:
 
 | Campo | Valor |
 |-------|-------|
-| **Name** | `aureo-api` |
-| **Root Directory** | `server` |
-| **Build Command** | `npm install && npm run build` |
-| **Start Command** | `npm start` |
-| **Environment** | `Node` |
-| **Plan** | **Free** |
+| **Sender email** | `noreply@tudominio.com` (o tu email de Brevo) |
+| **Sender name** | `FlowFin` |
+| **Host** | `smtp-relay.brevo.com` |
+| **Port** | `587` |
+| **Username** | Tu login SMTP de Brevo |
+| **Password** | Tu password SMTP de Brevo |
 
-6. **Agrega estas variables de entorno:**
+5. Click **Send test email** para verificar
+6. **Save**
 
-| Variable | Valor |
-|----------|-------|
-| `NODE_ENV` | `production` |
-| `DATABASE_URL` | Tu connection string de Supabase |
-| `JWT_SECRET` | Cualquier string largo y aleatorio |
-| `JWT_EXPIRES_IN` | `7d` |
-| `CLIENT_URL` | `https://aureo.vercel.app` |
+> ⚠️ **IMPORTANTE:** Si el test falla:
+> - Verifica que el puerto sea 587 (no 465)
+> - Verifica que la contraseña sea la **SMTP** (no la de la cuenta Brevo)
+> - En Brevo, verifica que tu cuenta tenga acceso SMTP activo
 
-7. Click en **Deploy Web Service**
-8. Espera ~3 minutos
-9. Copia la URL que te da Render (algo como: `https://aureo-api-xyz.onrender.com`)
+### 2.4 Buenas prácticas con Brevo
+- **Verifica tu dominio** en Brevo para mejorar deliverability (SPF, DKIM, DMARC)
+- **No envíes más de 300 emails/día** en el plan gratuito
+- **Usa un sender name reconocible**: "FlowFin" no "noreply"
+- **Monitorea bounce rate** en el dashboard de Brevo
 
 ---
 
-## 🎨 PASO 4: Desplegar Frontend en Vercel
+## 🗄️ PASO 3: Configurar Base de Datos
 
+### 3.1 Crear tabla `profiles` en Supabase
+
+Ve a **SQL Editor** y ejecuta:
+
+```sql
+-- Tabla de perfiles de usuario
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'MXN',
+  monthly_income NUMERIC,
+  income_type TEXT DEFAULT 'fixed' CHECK (income_type IN ('fixed', 'variable')),
+  has_debts BOOLEAN DEFAULT false,
+  goal_type TEXT DEFAULT 'save' CHECK (goal_type IN ('save', 'debt_control', 'expense_control')),
+  onboarded BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabla de transacciones
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+  amount NUMERIC(15,2) NOT NULL,
+  description TEXT NOT NULL,
+  category_id TEXT,
+  date TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Habilitar Row Level Security
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Políticas RLS para profiles
+CREATE POLICY "Users can view own profile"
+  ON profiles FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile"
+  ON profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Políticas RLS para transactions
+CREATE POLICY "Users can view own transactions"
+  ON transactions FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own transactions"
+  ON transactions FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own transactions"
+  ON transactions FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own transactions"
+  ON transactions FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Trigger para crear perfil automáticamente
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, email)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'full_name', 'Usuario'),
+    NEW.email
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- Índice para queries por fecha
+CREATE INDEX IF NOT EXISTS idx_transactions_user_date
+  ON transactions (user_id, date DESC);
+```
+
+---
+
+## 🌐 PASO 4: Configurar Variables de Entorno
+
+### 4.1 Local (desarrollo)
+Crea un archivo `.env` en la raíz del proyecto:
+
+```env
+VITE_SUPABASE_URL=https://ibgmvprphhdtxnlexkgz.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_anon_key_aqui
+```
+
+### 4.2 Vercel (producción)
+1. Ve a tu proyecto en Vercel
+2. **Settings → Environment Variables**
+3. Agrega:
+
+| Variable | Valor |
+|----------|-------|
+| `VITE_SUPABASE_URL` | `https://ibgmvprphhdtxnlexkgz.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Tu anon key de Supabase |
+
+4. **Redeploy** para aplicar los cambios
+
+> ⚠️ **NUNCA** subas el `.env` a Git. Ya está en `.gitignore`.
+
+---
+
+## 📦 PASO 5: Desplegar en Vercel
+
+### 5.1 Subir a GitHub (si no lo has hecho)
+```bash
+git add .
+git commit -m "feat: production-ready auth system"
+git push origin main
+```
+
+### 5.2 Conectar repo a Vercel
 1. Ve a https://vercel.com
-2. **Sign in** con GitHub
-3. **Add New...** → **Project**
-4. Importa tu repo `aureo`
-5. Configura:
+2. **Add New... → Project**
+3. Importa tu repo `fortuna`
+4. Configura:
 
 | Campo | Valor |
 |-------|-------|
 | **Framework Preset** | `Vite` |
-| **Root Directory** | `client` |
-| **Build Command** | `npm install && npm run build` |
+| **Root Directory** | `./` (raíz del proyecto) |
+| **Build Command** | `npm run build` |
 | **Output Directory** | `dist` |
+| **Install Command** | `npm install` |
 
-6. **Agrega esta variable de entorno:**
+5. Agrega las variables de entorno (Paso 4.2)
+6. Click en **Deploy**
 
-| Variable | Valor |
-|----------|-------|
-| `VITE_API_URL` | `https://tu-api.onrender.com/api` |
-
-7. Click en **Deploy**
-8. Espera ~1 minuto
-9. ¡Listo! Tu app está en `https://aureo.vercel.app`
-
----
-
-## 🔗 PASO 5: Actualizar URL del backend
-
-Después de tener ambas URLs:
-
-1. Ve a **Render** → Settings → Environment Variables
-2. Cambia `CLIENT_URL` a tu URL de Vercel
-3. Ve a **Vercel** → Settings → Environment Variables
-4. Asegúrate que `VITE_API_URL` apunta a tu URL de Render
-5. **Redeploy** en ambos (automático al hacer push)
+### 5.3 Verificar el deploy
+- Abre `https://fortuna-zeta-seven.vercel.app`
+- Intenta registrarte con un email real
+- Deberías recibir el correo de confirmación
+- Haz clic en el link → debes ser redirigido al dashboard
 
 ---
 
-## 🌐 URLs Finales
+## ✅ PASO 6: Checklist de Verificación
 
-| Servicio | URL |
-|----------|-----|
-| **Frontend** | `https://aureo.vercel.app` |
-| **Backend API** | `https://aureo-api-xyz.onrender.com` |
-| **API Health** | `https://aureo-api-xyz.onrender.com/api/health` |
-| **Base de datos** | Supabase Cloud |
+### Auth Flow
+- [ ] Registro con email + contraseña funciona
+- [ ] Correo de confirmación llega (revisar spam)
+- [ ] Clic en link de confirmación redirige al dashboard
+- [ ] Login funciona después de confirmar email
+- [ ] "Olvidé mi contraseña" envía email de recuperación
+- [ ] Link de recuperación lleva a página de nueva contraseña
+- [ ] Nueva contraseña se guarda y puedo hacer login
+- [ ] Logout funciona correctamente
 
----
+### Seguridad
+- [ ] RLS policies están activas en Supabase
+- [ ] No se exponen datos de otros usuarios
+- [ ] Contraseñas requieren mínimo 8 chars + mayúscula + número
+- [ ] Sesiones expiran correctamente
+- [ ] Tokens se refrescan automáticamente
 
-## ⚠️ Notas Importantes
-
-### Render Free Tier
-- El servidor se "duerme" después de 15 min sin uso
-- La primera request tarda ~30 segundos en despertar
-- Para uso personal, perfecto
-
-### Vercel Free Tier
-- Siempre activo, sin sleeping
-- 100GB bandwidth/mes (suficiente para uso personal)
-
-### Supabase Free Tier
-- 500MB de base de datos
-- 2GB de transferencia/mes
-- Proyectos se pausan después de 7 días sin actividad (solo reactiva)
+### UX
+- [ ] Pantalla de "Revisa tu correo" aparece tras registro
+- [ ] Mensajes de error son claros y en español
+- [ ] Loaders aparecen durante operaciones asíncronas
+- [ ] Redirecciones funcionan sin parpadeos
 
 ---
 
-## 🔄 Actualizar tu app
+## 🐛 Errores Comunes y Soluciones
+
+### `otp_expired`
+**Causa:** El link del correo expiró (24h para confirmación, 1h para recovery).
+**Solución:** El usuario debe solicitar un nuevo link desde el login.
+
+### `access_denied`
+**Causa:** Las Redirect URLs no están configuradas correctamente en Supabase.
+**Solución:** Ve a **Authentication → URL Configuration** y agrega `https://fortuna-zeta-seven.vercel.app/**`
+
+### El correo de confirmación no llega
+**Causas posibles:**
+1. SMTP no configurado en Supabase → Configura Brevo (Paso 2)
+2. Email en spam → Indicar al usuario que revise spam
+3. Dominio no verificado en Brevo → Verificar dominio en Brevo
+
+### Después de confirmar email, no redirige
+**Causa:** Falta la ruta `/auth/callback` en el frontend.
+**Solución:** Ya implementada en `AuthCallbackPage.tsx`. Verifica que esté en `App.tsx`.
+
+### `session_not_found` al hacer logout
+**Causa:** La sesión ya expiró o fue eliminada.
+**Solución:** El auth store maneja esto gracefully. No es un error crítico.
+
+### Profile no se crea tras el registro
+**Causa:** El trigger `handle_new_user` no existe o falló.
+**Solución:** Ejecuta el SQL del Paso 3.1 nuevamente.
+
+---
+
+## 🔄 Actualizar la app
 
 Cada vez que hagas cambios:
 
@@ -163,12 +337,16 @@ git commit -m "descripción del cambio"
 git push
 ```
 
-**Automáticamente:**
-- Vercel redeploys frontend (~1 min)
-- Render redeploys backend (~2 min)
+Vercel redeploya automáticamente (~1 min).
 
 ---
 
 ## 🎉 ¡Listo!
 
-Tu app de gestión financiera personal está online, gratis, con HTTPS y dominio propio.
+Tu sistema de autenticación fintech está en producción con:
+- ✅ Supabase Auth con email confirmation
+- ✅ Brevo SMTP para envío de correos
+- ✅ Recuperación de contraseña funcional
+- ✅ Sesiones persistentes con refresh automático
+- ✅ UX profesional con feedback visual
+- ✅ Row Level Security para protección de datos

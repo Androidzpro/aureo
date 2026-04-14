@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Lightbulb, Star } from 'lucide-react'
+import { X, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Lightbulb } from 'lucide-react'
 import type { CoachAlert } from '@/lib/flowCoach'
 import { cn } from '@/lib/data'
 
@@ -24,17 +24,17 @@ const priorityConfig: Record<string, { bg: string; border: string; icon: React.R
     badgeBg: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
   },
   tip: {
-    bg: 'bg-blue-50 dark:bg-blue-900/10',
-    border: 'border-blue-200 dark:border-blue-800/30',
-    icon: <Lightbulb size={16} className="text-blue-500" />,
+    bg: 'bg-emerald-50 dark:bg-emerald-900/10',
+    border: 'border-emerald-200 dark:border-emerald-800/30',
+    icon: <Lightbulb size={16} className="text-emerald-500" />,
     badge: 'Tip',
-    badgeBg: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+    badgeBg: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
   },
   positive: {
     bg: 'bg-emerald-50 dark:bg-emerald-900/10',
     border: 'border-emerald-200 dark:border-emerald-800/30',
-    icon: <Star size={16} className="text-emerald-500" />,
-    badge: 'Logro',
+    icon: <TrendingUp size={16} className="text-emerald-500" />,
+    badge: 'Bien',
     badgeBg: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
   },
 }

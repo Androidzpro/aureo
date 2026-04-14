@@ -28,7 +28,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirmar'
             </div>
             <div className="flex gap-2 p-4 pt-0">
               <button onClick={onCancel} className="flex-1 h-11 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-xs">{cancelLabel}</button>
-              <button onClick={onConfirm} className={cn('flex-1 h-11 text-white font-medium rounded-xl text-xs', danger ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-indigo-500 to-purple-600')}>{confirmLabel}</button>
+              <button onClick={onConfirm} className={cn('flex-1 h-11 text-white font-medium rounded-xl text-xs', danger ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20')}>{confirmLabel}</button>
             </div>
           </motion.div>
         </motion.div>
@@ -41,13 +41,29 @@ export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`} />
 }
 
-export function EmptyState({ emoji, title, message, action, actionLabel }: { emoji: string; title: string; message: string; action?: () => void; actionLabel?: string }) {
+interface EmptyStateProps {
+  emoji: string
+  title: string
+  message: string
+  action?: () => void
+  actionLabel?: string
+}
+
+export function EmptyState({ emoji, title, message, action, actionLabel }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center py-12 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4"><span className="text-3xl">{emoji}</span></div>
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{title}</p>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center py-12 text-center">
+      <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 flex items-center justify-center mb-4 shadow-sm">
+        <span className="text-3xl">{emoji}</span>
+      </motion.div>
+      <p className="text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
       <p className="text-xs text-gray-400 mt-1 max-w-xs">{message}</p>
-      {action && <button onClick={action} className="mt-4 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-semibold rounded-xl shadow-lg shadow-indigo-300/30 dark:shadow-indigo-900/50">{actionLabel}</button>}
-    </div>
+      {action && (
+        <motion.button whileTap={{ scale: 0.96 }} onClick={action}
+          className="mt-5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/25 transition-colors">
+          {actionLabel}
+        </motion.button>
+      )}
+    </motion.div>
   )
 }

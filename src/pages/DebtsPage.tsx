@@ -18,6 +18,7 @@ export default function DebtsPage() {
   const [form, setForm] = useState({ name: '', total: '', creditor: '', interest: '0', minPayment: '' })
   const [payForm, setPayForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0], notes: '' })
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [debtSaved, setDebtSaved] = useState(false)
 
   useEffect(() => { load() }, [profile?.id])
 
@@ -34,12 +35,19 @@ export default function DebtsPage() {
   const saveDebt = async () => {
     if (!profile?.id || !form.name || !form.total) return
     const data = { user_id: profile.id, name: form.name, total_amount: parseFloat(form.total), creditor: form.creditor || null, interest_rate: parseFloat(form.interest) || 0, min_payment: form.minPayment ? parseFloat(form.minPayment) : null }
-    if (editing) {
-      await supabase.from('debts').update(data).eq('id', editing.id)
-    } else {
-      await supabase.from('debts').insert([{ ...data, paid_amount: 0, status: 'active' }])
-    }
-    setShowModal(false); setEditing(null); load()
+    try {
+      if (editing) {
+        await supabase.from('debts').update(data).eq('id', editing.id)
+      } else {
+        await supabase.from('debts').insert([{ ...data, paid_amount: 0, status: 'active' }])
+      }
+      playSound('success')
+      setDebtSaved(true)
+      setTimeout(() => setDebtSaved(false), 2500)
+      setShowModal(false)
+      setEditing(null)
+      load()
+    } catch { /* error handled silently */ }
   }
 
   const addPayment = async () => {
@@ -48,11 +56,20 @@ export default function DebtsPage() {
     if (amount <= 0) return
     const newPaid = selected.paid_amount + amount
     const status = newPaid >= selected.total_amount ? 'paid' : 'active'
-    // Insert payment record
-    await supabase.from('debt_payments').insert([{ debt_id: selected.id, user_id: profile!.id, amount, date: new Date(payForm.date).toISOString(), notes: payForm.notes || null }])
-    // Update debt
-    await supabase.from('debts').update({ paid_amount: newPaid, status }).eq('id', selected.id)
-    setShowPay(false); setPayForm({ amount: '', date: new Date().toISOString().split('T')[0], notes: '' }); setSelected(null); load()
+    try {
+      await supabase.from('debt_payments').insert([{ debt_id: selected.id, user_id: profile!.id, amount, date: new Date(payForm.date).toISOString(), notes: payForm.notes || null }])
+      await supabase.from('debts').update({ paid_amount: newPaid, status }).eq('id', selected.id)
+      playSound('success')
+      if (status === 'paid') {
+        // Show celebration
+        setDebtSaved(true)
+        setTimeout(() => setDebtSaved(false), 3000)
+      }
+      setShowPay(false)
+      setPayForm({ amount: '', date: new Date().toISOString().split('T')[0], notes: '' })
+      setSelected(null)
+      load()
+    } catch { /* error handled silently */ }
   }
 
   const totalDebt = debts.filter(d => d.status === 'active').reduce((s, d) => s + (d.total_amount - d.paid_amount), 0)
@@ -62,8 +79,8 @@ export default function DebtsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-lg font-bold text-gray-900 dark:text-white">Deudas</h1><p className="text-xs text-gray-400">Controla y elimina tus deudas</p></div>
-        <button onClick={openAdd} className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-300/30 active:scale-90 transition-transform"><Plus size={18} className="text-white" /></button>
+        <div><h1 className="text-lg font-bold text-gray-900 dark:text-white">Deudas</h1><p className="text-xs text-gray-400">Controla y paga tus deudas</p></div>
+        <button onClick={openAdd} className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-600/25 active:scale-90 transition-transform"><Plus size={18} className="text-white" /></button>
       </div>
 
       {/* Summary */}
@@ -94,12 +111,27 @@ export default function DebtsPage() {
                     <button onClick={() => setConfirmDelete(debt.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 size={14} className="text-red-400" /></button>
                   </div>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-2"><div className={cn('h-1.5 rounded-full', debt.status === 'paid' ? 'bg-emerald-500' : 'bg-indigo-500')} style={{ width: `${Math.min(pct, 100)}%` }} /></div>
+                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-2"><div className={cn('h-1.5 rounded-full transition-all', debt.status === 'paid' ? 'bg-emerald-500' : 'bg-emerald-400')} style={{ width: `${Math.min(pct, 100)}%` }} /></div>
                 <div className="flex justify-between text-[10px]"><span className="text-gray-400">{pct.toFixed(0)}% pagado</span><span className="text-gray-400">Restante: {formatCurrency(remaining, profile?.currency)}</span></div>
                 {debt.min_payment && <p className="text-[10px] text-amber-600 mt-1">⚠️ Pago mínimo: {formatCurrency(debt.min_payment, profile?.currency)}</p>}
               </div>
             )
           })}
+
+      {/* Success celebration */}
+      <AnimatePresence>
+        {debtSaved && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[70] flex items-center justify-center p-4" onClick={() => setDebtSaved(false)}>
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="bg-white dark:bg-gray-900 rounded-2xl p-8 text-center max-w-sm">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}>
+                <CheckCircle2 size={48} className="text-emerald-500 mx-auto mb-3" />
+              </motion.div>
+              <p className="text-lg font-bold text-gray-900 dark:text-white mb-2">¡Bien hecho! 💪</p>
+              <p className="text-sm text-gray-500">Cada pago te acerca más a tu libertad financiera.</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add/Edit Modal */}
       <AnimatePresence>
@@ -115,7 +147,7 @@ export default function DebtsPage() {
                   <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Interés (%)</label><input type="number" value={form.interest} onChange={e => setForm({...form,interest:e.target.value})} placeholder="0" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500" /></div>
                   <div><label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Pago mín ($)</label><input type="number" value={form.minPayment} onChange={e => setForm({...form,minPayment:e.target.value})} placeholder="0" className="w-full h-11 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-indigo-500" /></div>
                 </div>
-                <button onClick={saveDebt} className="w-full h-11 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl text-xs">{editing ? 'Actualizar' : 'Guardar'}</button>
+                <button onClick={saveDebt} className="w-full h-11 bg-emerald-600 text-white font-medium rounded-xl text-xs shadow-lg shadow-emerald-600/25 active:scale-[0.98] transition-all">{editing ? 'Actualizar' : 'Guardar'}</button>
               </div>
             </motion.div>
           </motion.div>
